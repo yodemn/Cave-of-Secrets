@@ -21,3 +21,7 @@ Generated Binaries/
 
 # Ignore Windows hidden system files
 Thumbs.db
+.ccsproject
+.clangd
+.cproject
+.project
