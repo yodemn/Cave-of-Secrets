@@ -1,0 +1,16 @@
+# Ignore the build folders (where the object files live)
+Debug/
+Release/
+
+# Ignore specific compiler generated files just in case
+*.obj
+*.o
+*.out
+*.map
+*.d
+
+# Ignore Mac hidden system files
+.DS_Store
+
+# Ignore Windows hidden system files
+Thumbs.db
