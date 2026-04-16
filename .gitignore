@@ -6,11 +6,18 @@ Generated Binaries/
 # Ignore compiled object files and executables
 *.out
 *.obj
+*.o
 *.d
 *.map
 *.hex
 *.bin
 
-# Ignore IDE specific hidden folders (optional but keeps repo clean)
+# Ignore IDE specific hidden folders
 .launches/
 .settings/
+
+# Ignore Mac hidden system files
+.DS_Store
+
+# Ignore Windows hidden system files
+Thumbs.db
