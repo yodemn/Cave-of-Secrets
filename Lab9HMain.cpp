@@ -123,7 +123,7 @@ int main1(void){ // main1
   Sprite playerSprite(64, 100, player_img);
   Background back1(0, 127, 0, background0_img);
 // use main2 to observe graphics
-int main(void){ // main2
+int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
@@ -155,7 +155,25 @@ int main(void){ // main2
   while(1){
   }
 }
+int main(void){ 
+  __disable_irq();
+  PLL_Init();      // Set bus speed
+  LaunchPad_Init(); // Basic MSPM0 setup
+  Switch_Init();   // Initialize your switches (PB24 - PB27)
+  LED_Init();      // Initialize your LEDs (PB15 - PB17)
+  __enable_irq();
 
+  // Test: Turn on the Red LED (PB15)
+  LED_On(1<<15);
+  LED_On(1<<16);
+  LED_On(1<<17);
+  LED_On()
+
+  while(1){
+      // The infinite loop keeps the program running.
+      // The LED will stay on!
+  }
+}
 // use main3 to test switches and LEDs
 int main3(void){ // main3
   __disable_irq();
@@ -164,9 +182,36 @@ int main3(void){ // main3
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
   while(1){
-    // write code to test switches and LEDs
-    
-
+      // Read the entire Port B input register
+      uint32_t input = GPIOB->DIN31_0;
+      
+      // Test Switch 1 (PB24) -> Controls LED 1 (PB15)
+      if((input & (1<<24)) == 0){  // If PB24 is pressed (reads 0)
+          LED_On(1<<15);
+      } else {
+          LED_Off(1<<15);
+      }
+      
+      // Test Switch 2 (PB25) -> Controls LED 2 (PB16)
+      if((input & (1<<25)) == 0){  
+          LED_On(1<<16);
+      } else {
+          LED_Off(1<<16);
+      }
+      
+      // Test Switch 3 (PB26) -> Controls LED 3 (PB17)
+      if((input & (1<<26)) == 0){  
+          LED_On(1<<17);
+      } else {
+          LED_Off(1<<17);
+      }
+      
+      // Test Switch 4 (PB27) -> Toggles all LEDs while held
+      if((input & (1<<27)) == 0){  
+          LED_Toggle((1<<15) | (1<<16) | (1<<17));
+          // Small delay so it doesn't toggle millions of times per second
+          for(volatile int i=0; i<100000; i++){}; 
+      }
   }
 }
 // use main4 to test sound outputs

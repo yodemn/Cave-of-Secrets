@@ -17,6 +17,7 @@ class Sprite{
         Sprite(int startX, int startY, ImageData img);
         void Draw();
         void Move(); 
+        void Jump();
 };
 
 //image of platform 

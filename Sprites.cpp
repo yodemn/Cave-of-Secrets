@@ -21,6 +21,10 @@ Sprite::Sprite(int startX, int startY, ImageData img){
     image = img;
 }
 
+void Sprite::Jump(){
+    ;
+}
+
 void Sprite::Move(){
     y += velocityY;
 
