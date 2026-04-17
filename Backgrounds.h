@@ -5,7 +5,7 @@
 #define Backgrounds_H
 
 class Background {
-    public:
+    public: 
         int x;
         int y;
         void Draw();

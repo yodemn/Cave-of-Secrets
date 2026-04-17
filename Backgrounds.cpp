@@ -8,7 +8,7 @@ Background::Background(int startX, int startY, int iNum, ImageData i) {
     y = startY;
     imageNum = iNum;
     image = i;
-}
+} 
 
 
 void Background::Draw(){
