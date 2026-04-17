@@ -10,10 +10,9 @@ class Background {
         int y;
         void Draw();
         ImageData image;
+        Background(int, int, int, ImageData);
     private:
         int imageNum;
-        
-    Background(int, int, int, ImageData);
 };
 
 #endif

@@ -1,16 +1,10 @@
 //create sprite images and attributes 
 
 #include <stdint.h>
-
+#include "img.h"
 #ifndef Sprites_H
 #define Sprites_H
 
-
-struct ImageData {
-    const uint16_t* pixels; // pointer to array for image
-    uint8_t width;
-    uint8_t height;
-};
 
 class Sprite{
     public:

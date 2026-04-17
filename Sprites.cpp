@@ -12,7 +12,6 @@ ImageData player_img = {
     player_pix,
     10,
     30
-
 };
 
 Sprite::Sprite(int startX, int startY, ImageData img){
