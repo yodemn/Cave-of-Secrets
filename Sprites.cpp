@@ -1,4 +1,3 @@
-
 #include <stdint.h>
 #include "Sprites.h"
 #include  "../inc/ST7735.h"
@@ -21,7 +20,6 @@ Sprite::Sprite(int startX, int startY, ImageData img){
     y = startY;
     velocityY = 0;
     image = img;
-
 }
 
 void Sprite::Move(){
@@ -30,5 +28,5 @@ void Sprite::Move(){
 }
 
 void Sprite::Draw(){
-    ST7735_DrawBitmap(x, y, image, image.width, image.height);
+    ST7735_DrawBitmap(x, y, image.pixels, image.width, image.height);
 }
