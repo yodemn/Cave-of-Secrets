@@ -4,6 +4,10 @@
 #ifndef Backgrounds_H
 #define Backgrounds_H
 
+extern const uint16_t background0[160 * 128];
+extern ImageData background0_img;
+extern ImageData bg_img;
+
 class Background {
     public: 
         int x;

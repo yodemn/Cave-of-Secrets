@@ -21,6 +21,7 @@
 #include "images/images.h"
 #include "Sprites.h"
 #include "Backgrounds.h"
+#include "TileSprites.h"
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
@@ -120,8 +121,7 @@ int main1(void){ // main1
 
   extern ImageData player_img;
   Sprite playerSprite(64, 100, player_img);
-  extern ImageData bg_img;
-  Background back1(0, 128, 0, bg_img);
+  Background back1(0, 127, 0, background0_img);
 // use main2 to observe graphics
 int main(void){ // main2
   __disable_irq();
@@ -142,6 +142,7 @@ int main(void){ // main2
   // ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
   //playerSprite.Draw();
   back1.Draw();
+  DrawImageChroma(24, 127, LargeTreeImage);
   for(uint32_t t=500;t>0;t=t-5){
     SmallFont_OutVertical(t,104,6); // top left
     Clock_Delay1ms(50);              // delay 50 msec
