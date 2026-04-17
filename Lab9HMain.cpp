@@ -247,32 +247,32 @@ int main(void){ // main3
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
   while(1){
-      // Read the entire Port B input register
-      uint32_t input = GPIOB->DIN31_0;
+      // Switch_In returns PA24-PA27 as bits 0-3.
+      uint32_t input = Switch_In();
       
-      // Test Switch 1 (PB24) -> Controls LED 1 (PB15)
-      if((input & (1<<24)) == 0){  // If PB24 is pressed (reads 0)
+      // Test Switch 1 (PA24) -> Controls LED 1 (PA15)
+      if(input & 0x01){
           LED_On(1<<15);
       } else {
           LED_Off(1<<15);
       }
       
-      // Test Switch 2 (PB25) -> Controls LED 2 (PB16)
-      if((input & (1<<25)) == 0){  
+      // Test Switch 2 (PA25) -> Controls LED 2 (PA16)
+      if(input & 0x02){
           LED_On(1<<16);
       } else {
           LED_Off(1<<16);
       }
       
-      // Test Switch 3 (PB26) -> Controls LED 3 (PB17)
-      if((input & (1<<26)) == 0){  
+      // Test Switch 3 (PA26) -> Controls LED 3 (PA17)
+      if(input & 0x04){
           LED_On(1<<17);
       } else {
           LED_Off(1<<17);
       }
       
-      // Test Switch 4 (PB27) -> Toggles all LEDs while held
-      if((input & (1<<27)) == 0){  
+      // Test Switch 4 (PA27) -> Toggles all LEDs while held
+      if(input & 0x08){
           LED_Toggle((1<<15) | (1<<16) | (1<<17));
           // Small delay so it doesn't toggle millions of times per second
           for(volatile int i=0; i<100000; i++){}; 
