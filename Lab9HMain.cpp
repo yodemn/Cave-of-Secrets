@@ -22,6 +22,8 @@
 #include "Sprites.h"
 #include "Backgrounds.h"
 #include "TileSprites.h"
+#include "PCBJoystick.h"
+
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
@@ -122,11 +124,72 @@ int main1(void){ // main1
   extern ImageData player_img;
   Sprite playerSprite(64, 100, player_img);
   Background back1(0, 127, 0, background0_img);
+
+static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select){
+  if(select){
+    return 5; // button
+  }
+  if(x < 1500){
+    return 4; // down
+  }
+  if(x > 2600){
+    return 3; // up
+  }
+  if(y < 1500){
+    return 2; // right
+  }
+  if(y > 2600){
+    return 1; // left
+  }
+  return 0; // center
+}
+
+static void DrawJoystickDebug(uint32_t x, uint32_t y, uint32_t select){
+  ST7735_FillRect(0, 0, 90, 18, ST7735_BLACK);
+  ST7735_SetCursor(0, 0);
+  ST7735_OutString((char *)"X");
+  ST7735_OutUDec4(x);
+  ST7735_OutString((char *)" Y");
+  ST7735_OutUDec4(y);
+  ST7735_SetCursor(0, 1);
+  ST7735_OutString((char *)"S");
+  ST7735_OutUDec(select);
+  ST7735_OutString((char *)" D");
+  ST7735_OutUDec(JoystickDirection(x, y, select));
+}
+
+// testing main
+int mainT(void) {
+  __disable_irq();
+  PLL_Init(); // set bus speed
+  LaunchPad_Init();
+  PCBJoystick_Init();
+  Switch_Init();   // Initialize your switches (PB24 - PB27)
+  LED_Init();      // Initialize your LEDs (PB15 - PB17)
+  ST7735_InitPrintf(INITR_BLACKTAB); // INITR_REDTAB for AdaFruit, INITR_BLACKTAB for HiLetGo
+  ST7735_SetRotation(1);
+  ST7735_FillScreen(ST7735_BLACK);
+  LED_On(1<<15);
+  LED_On(1<<16);
+  LED_On(1<<17);
+  back1.Draw();
+  DrawExampleLevel();
+  while(1){
+    uint32_t joyX, joyY, joySelect;
+    PCBJoystick_In(&joyX, &joyY, &joySelect);
+    DrawJoystickDebug(joyX, joyY, joySelect);
+    Clock_Delay1ms(100);
+  }
+}
+
 // use main2 to observe graphics
 int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
+  PCBJoystick_Init();
+  Switch_Init();   // Initialize your switches (PB24 - PB27)
+  LED_Init();      // Initialize your LEDs (PB15 - PB17)
   ST7735_InitPrintf(INITR_BLACKTAB); // INITR_REDTAB for AdaFruit, INITR_BLACKTAB for HiLetGo
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
@@ -141,6 +204,9 @@ int main2(void){ // main2
   // ST7735_DrawBitmap(60, 9, SmallEnemy20pointB, 16,10);
   // ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
   //playerSprite.Draw();
+  LED_On(1<<15);
+  LED_On(1<<16);
+  LED_On(1<<17);
   back1.Draw();
   DrawExampleLevel();
   // ST7735_FillScreen(0x0000);   // set screen to black
@@ -155,7 +221,7 @@ int main2(void){ // main2
   while(1){
   }
 }
-int main(void){ 
+int mainA(void){ 
   __disable_irq();
   PLL_Init();      // Set bus speed
   LaunchPad_Init(); // Basic MSPM0 setup
@@ -167,7 +233,6 @@ int main(void){
   LED_On(1<<15);
   LED_On(1<<16);
   LED_On(1<<17);
-  LED_On()
 
   while(1){
       // The infinite loop keeps the program running.
@@ -175,7 +240,7 @@ int main(void){
   }
 }
 // use main3 to test switches and LEDs
-int main3(void){ // main3
+int main(void){ // main3
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();

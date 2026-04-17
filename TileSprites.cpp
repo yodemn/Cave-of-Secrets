@@ -2807,11 +2807,13 @@ const TileSpriteEntry TileSprites[] = {
 };
 
 static ImageData PlatformMiddleImage(uint8_t index){
-    switch(index % 3){
-        case 0: return PlatformMiddleAImage;
-        case 1: return PlatformMiddleBImage;
-        default: return PlatformMiddleCImage;
-    }
+  if(index % 3 == 0) {
+    return PlatformMiddleAImage;
+  } else if (index % 2) {
+    return PlatformMiddleBImage;
+  } else {
+    return PlatformMiddleCImage;
+  }
 }
 
 void DrawBitmapChroma(int16_t x, int16_t y, const uint16_t *image, int16_t w, int16_t h, uint16_t chroma){
@@ -2835,7 +2837,7 @@ void DrawPlatformRun(int16_t x, int16_t y, uint8_t tiles){
     if(tiles == 0){
         return;
     }
-    if(tiles == 1){
+    if(tiles == 1) {
         DrawImageChroma(x, y, PlatformMiddleAImage);
         return;
     }
