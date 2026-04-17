@@ -142,11 +142,7 @@ int main(void){ // main2
   // ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
   //playerSprite.Draw();
   back1.Draw();
-  DrawImageChroma(24, 127, LargeTreeImage);
-  for(uint32_t t=500;t>0;t=t-5){
-    SmallFont_OutVertical(t,104,6); // top left
-    Clock_Delay1ms(50);              // delay 50 msec
-  }
+  DrawExampleLevel();
   // ST7735_FillScreen(0x0000);   // set screen to black
   // ST7735_SetCursor(1, 1);
   // ST7735_OutString((char *)"GAME OVER");

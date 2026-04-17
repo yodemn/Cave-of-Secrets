@@ -11,6 +11,8 @@
 #define TILE_CHROMA_KEY 0x07E0
 #define LARGE_TREE_WIDTH 56
 #define LARGE_TREE_HEIGHT 82
+#define SMALL_TREE_WIDTH 36
+#define SMALL_TREE_HEIGHT 56
 
 struct TileSpriteEntry {
     uint8_t gridX;
@@ -22,9 +24,20 @@ extern const uint32_t TileSpriteCount;
 extern const TileSpriteEntry TileSprites[];
 extern const uint16_t LargeTreeSprite[LARGE_TREE_WIDTH * LARGE_TREE_HEIGHT];
 extern ImageData LargeTreeImage;
+extern const uint16_t SmallTreeSprite[SMALL_TREE_WIDTH * SMALL_TREE_HEIGHT];
+extern ImageData SmallTreeImage;
+
+// Platform surface pieces from tileset row 4, columns 5-9.
+#define PlatformLeftEndImage TileImage_05_04
+#define PlatformMiddleAImage TileImage_06_04
+#define PlatformMiddleBImage TileImage_07_04
+#define PlatformMiddleCImage TileImage_08_04
+#define PlatformRightEndImage TileImage_09_04
 
 void DrawBitmapChroma(int16_t x, int16_t y, const uint16_t *image, int16_t w, int16_t h, uint16_t chroma);
 void DrawImageChroma(int16_t x, int16_t y, ImageData image, uint16_t chroma = TILE_CHROMA_KEY);
+void DrawPlatformRun(int16_t x, int16_t y, uint8_t tiles);
+void DrawExampleLevel(void);
 
 extern const uint16_t TileSprite_00_00[TILE_SPRITE_WIDTH * TILE_SPRITE_HEIGHT];
 extern ImageData TileImage_00_00;
