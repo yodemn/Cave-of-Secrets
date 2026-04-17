@@ -2,7 +2,7 @@
 #include "Backgrounds.h"
 #include  "../inc/ST7735.h"
 
-Background::Background() {
+Background::Background(){
     x = startX;
     y = startY;
     velocityY = 0;
