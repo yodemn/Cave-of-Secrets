@@ -1,19 +1,16 @@
 #include <stdint.h>
 #include "Backgrounds.h"
 #include  "../inc/ST7735.h"
+#include "img.h"
 
-Background::Background(){
+Background::Background(int startX, int startY, int iNum, ImageData i) {
     x = startX;
     y = startY;
-    velocityY = 0;
-    image = img;
+    imageNum = iNum;
+    image = i;
 }
 
-void Sprite::Move(){
-    y += velocityY;
 
-}
-
-void Sprite::Draw(){
+void Background::Draw(){
     ST7735_DrawBitmap(x, y, image.pixels, image.width, image.height);
 }
