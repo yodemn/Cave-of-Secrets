@@ -122,8 +122,120 @@ int main1(void){ // main1
 }
 
   extern ImageData player_img;
-  Sprite playerSprite(64, 100, player_img);
+  AnimatedPlayer player(42, 127);
   Background back1(0, 127, 0, background0_img);
+
+struct DirtyRect {
+  int16_t x0;
+  int16_t y0;
+  int16_t x1;
+  int16_t y1;
+};
+
+static DirtyRect PlayerRect(int16_t x, int16_t y){
+  DirtyRect r;
+  r.x0 = x;
+  r.y0 = y - PLAYER_SPRITE_HEIGHT + 1;
+  r.x1 = x + PLAYER_SPRITE_WIDTH - 1;
+  r.y1 = y;
+  return r;
+}
+
+static DirtyRect UnionRect(DirtyRect a, DirtyRect b){
+  DirtyRect r;
+  r.x0 = (a.x0 < b.x0) ? a.x0 : b.x0;
+  r.y0 = (a.y0 < b.y0) ? a.y0 : b.y0;
+  r.x1 = (a.x1 > b.x1) ? a.x1 : b.x1;
+  r.y1 = (a.y1 > b.y1) ? a.y1 : b.y1;
+  return r;
+}
+
+static bool Intersects(DirtyRect a, DirtyRect b){
+  return (a.x0 <= b.x1) && (a.x1 >= b.x0) && (a.y0 <= b.y1) && (a.y1 >= b.y0);
+}
+
+static DirtyRect ImageRect(int16_t x, int16_t y, ImageData image){
+  DirtyRect r;
+  r.x0 = x;
+  r.y0 = y - image.height + 1;
+  r.x1 = x + image.width - 1;
+  r.y1 = y;
+  return r;
+}
+
+static DirtyRect PlatformRect(int16_t x, int16_t y, uint8_t tiles){
+  DirtyRect r;
+  r.x0 = x;
+  r.y0 = y - TILE_SPRITE_HEIGHT + 1;
+  r.x1 = x + tiles * TILE_SPRITE_WIDTH - 1;
+  r.y1 = y;
+  return r;
+}
+
+static void DrawImageChromaClipped(int16_t x, int16_t y, ImageData image, DirtyRect clip){
+  DirtyRect imageRect = ImageRect(x, y, image);
+  if(!Intersects(imageRect, clip)){
+    return;
+  }
+
+  int16_t x0 = (imageRect.x0 > clip.x0) ? imageRect.x0 : clip.x0;
+  int16_t y0 = (imageRect.y0 > clip.y0) ? imageRect.y0 : clip.y0;
+  int16_t x1 = (imageRect.x1 < clip.x1) ? imageRect.x1 : clip.x1;
+  int16_t y1 = (imageRect.y1 < clip.y1) ? imageRect.y1 : clip.y1;
+
+  for(int16_t screenY = y0; screenY <= y1; screenY++){
+    int16_t row = screenY - imageRect.y0;
+    int16_t sourceRow = image.height - 1 - row;
+    for(int16_t screenX = x0; screenX <= x1; screenX++){
+      int16_t sourceCol = screenX - imageRect.x0;
+      uint16_t color = image.pixels[sourceRow * image.width + sourceCol];
+      if(color != TILE_CHROMA_KEY){
+        ST7735_DrawPixel(screenX, screenY, color);
+      }
+    }
+  }
+}
+
+static void RestoreBackgroundRect(DirtyRect r){
+  if(r.x0 < 0) r.x0 = 0;
+  if(r.y0 < 0) r.y0 = 0;
+  if(r.x1 > 159) r.x1 = 159;
+  if(r.y1 > 127) r.y1 = 127;
+
+  for(int16_t y = r.y0; y <= r.y1; y++){
+    uint16_t sourceRow = 127 - y;
+    for(int16_t x = r.x0; x <= r.x1; x++){
+      ST7735_DrawPixel(x, y, background0[sourceRow * 160 + x]);
+    }
+  }
+}
+
+static void DrawLevelPiecesInRect(DirtyRect dirty){
+  if(Intersects(dirty, ImageRect(2, 127, SmallTreeImage))){
+    DrawImageChromaClipped(2, 127, SmallTreeImage, dirty);
+  }
+  if(Intersects(dirty, ImageRect(103, 127, LargeTreeImage))){
+    DrawImageChromaClipped(103, 127, LargeTreeImage, dirty);
+  }
+  if(Intersects(dirty, PlatformRect(8, 116, 6))){
+    DrawPlatformRun(8, 116, 6);
+  }
+  if(Intersects(dirty, PlatformRect(54, 96, 7))){
+    DrawPlatformRun(54, 96, 7);
+  }
+  if(Intersects(dirty, PlatformRect(12, 78, 5))){
+    DrawPlatformRun(12, 78, 5);
+  }
+  if(Intersects(dirty, PlatformRect(94, 70, 5))){
+    DrawPlatformRun(94, 70, 5);
+  }
+  if(Intersects(dirty, PlatformRect(36, 52, 8))){
+    DrawPlatformRun(36, 52, 8);
+  }
+  if(Intersects(dirty, PlatformRect(73, 35, 6))){
+    DrawPlatformRun(73, 35, 6);
+  }
+}
 
 static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   if(select){
@@ -136,30 +248,16 @@ static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select){
     return 3; // up
   }
   if(y < 1500){
-    return 2; // right
+    return 1; // left
   }
   if(y > 2600){
-    return 1; // left
+    return 2; // right
   }
   return 0; // center
 }
 
-static void DrawJoystickDebug(uint32_t x, uint32_t y, uint32_t select){
-  ST7735_FillRect(0, 0, 90, 18, ST7735_BLACK);
-  ST7735_SetCursor(0, 0);
-  ST7735_OutString((char *)"X");
-  ST7735_OutUDec4(x);
-  ST7735_OutString((char *)" Y");
-  ST7735_OutUDec4(y);
-  ST7735_SetCursor(0, 1);
-  ST7735_OutString((char *)"S");
-  ST7735_OutUDec(select);
-  ST7735_OutString((char *)" D");
-  ST7735_OutUDec(JoystickDirection(x, y, select));
-}
-
 // testing main
-int mainT(void) {
+int main(void) {
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
@@ -174,11 +272,32 @@ int mainT(void) {
   LED_On(1<<17);
   back1.Draw();
   DrawExampleLevel();
+  player.Draw();
   while(1){
     uint32_t joyX, joyY, joySelect;
     PCBJoystick_In(&joyX, &joyY, &joySelect);
-    DrawJoystickDebug(joyX, joyY, joySelect);
-    Clock_Delay1ms(100);
+    uint32_t direction = JoystickDirection(joyX, joyY, joySelect);
+    DirtyRect oldPlayerRect = PlayerRect(player.x, player.y);
+
+    if(direction == 1){
+      player.SetFacingLeft(true);
+      player.Move(PLAYER_RUN_SPEED);
+      player.SetWalking(true);
+    } else if(direction == 2){
+      player.SetFacingLeft(false);
+      player.Move(-PLAYER_RUN_SPEED);
+      player.SetWalking(true);
+    } else {
+      player.SetWalking(false);
+    }
+
+    player.Update();
+
+    DirtyRect dirty = UnionRect(oldPlayerRect, PlayerRect(player.x, player.y));
+    RestoreBackgroundRect(dirty);
+    DrawLevelPiecesInRect(dirty);
+    player.Draw();
+    Clock_Delay1ms(40);
   }
 }
 
@@ -240,7 +359,7 @@ int mainA(void){
   }
 }
 // use main3 to test switches and LEDs
-int main(void){ // main3
+int main3(void){ // main3
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
