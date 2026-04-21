@@ -25,8 +25,55 @@ AnimatedPlayer::AnimatedPlayer(int startX, int startY){
     facingLeft = false;
     frame = 0;
     tick = 0;
+    velocityY = 0;
+    gravity = 1;
+    isGrounded = true;
+    jumpTimer = 0;
+    wasJumpHeldLastFrame = false;
 }
 
+void AnimatedPlayer::UpdatePhysics(){
+    // Always apply gravity if they are in the air
+    if(!isGrounded){
+        velocityY += gravity; 
+    }
+
+    // Move the player
+    y += velocityY;
+
+    // Floor Collision (Replace 100 with your actual floor Y-coordinate)
+    if(y >= 128){ 
+        y = 128;           // Snap to floor
+        velocityY = 0;     // Stop falling
+        isGrounded = true; // Ready to jump again
+    }
+}
+
+void AnimatedPlayer::Jump(bool jumpButtonHeld){
+    // 1. The Initial Press (Just tapped the button this frame)
+    if(isGrounded && jumpButtonHeld && !wasJumpHeldLastFrame){
+        isGrounded = false;
+        jumpTimer = 0;   
+        velocityY = -4;  
+    }
+
+    // 2. The Sustained Hold
+    else if(!isGrounded && jumpButtonHeld && jumpTimer < MAX_JUMP_TIME){
+        velocityY = -4; 
+        jumpTimer++; 
+    }
+
+    // 3. THE FIX: The "Thruster Cut"
+    // If you ever let go of the button while in the air...
+    else if(!jumpButtonHeld) {
+        // Instantly max out the timer! 
+        // This ensures you cannot re-trigger step 2 if you press it again mid-air.
+        jumpTimer = MAX_JUMP_TIME; 
+    }
+
+    // 4. Save the button state for the next frame
+    wasJumpHeldLastFrame = jumpButtonHeld;
+}
 void AnimatedPlayer::SetWalking(bool isWalking){
     if(walking != isWalking){
         walking = isWalking;

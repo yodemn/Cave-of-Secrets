@@ -25,9 +25,16 @@ class AnimatedPlayer{
         bool facingLeft;
         uint8_t frame;
         uint8_t tick;
-
+        int velocityY;
+        int gravity;
+        bool isGrounded;
+        int jumpTimer;
+        const int MAX_JUMP_TIME = 15;
+        bool wasJumpHeldLastFrame;
         AnimatedPlayer(int startX, int startY);
         void SetWalking(bool isWalking);
+        void Jump(bool buttonHeld);
+        void UpdatePhysics();
         void SetFacingLeft(bool left);
         void Move(int dx);
         void Update();

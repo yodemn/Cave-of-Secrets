@@ -47,7 +47,8 @@ uint32_t Random(uint32_t n){
 }
 
 SlidePot Sensor(1674,173); // copy calibration from Lab 7
-
+  AnimatedPlayer player(42, 127);
+  Background back1(0, 127, 0, background0_img);
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select);
 
 volatile uint32_t CurrentJoystickX = 2048;
@@ -57,6 +58,7 @@ volatile uint32_t CurrentJoystickDirection = 0;
 volatile uint8_t NewFrameReady = 0;
 
 // game engine runs at 30Hz
+// game engine runs at 30Hz
 void TIMG12_IRQHandler(void){
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
     uint32_t x, y, select;
@@ -65,6 +67,31 @@ void TIMG12_IRQHandler(void){
     CurrentJoystickY = y;
     CurrentJoystickSelect = select;
     CurrentJoystickDirection = GetJoystickDirection(x, y, select);
+
+// 1. Read Jump Button SW4 (PA27)
+    uint32_t portA_input = GPIOA->DIN31_0;
+    
+    // Positive Logic: Pin reads 1 when pressed
+    bool isJumpButtonHeld = (portA_input & (1<<27)) != 0;
+    // 2. Apply Joystick Movement
+    if(CurrentJoystickDirection == 1){ // Left
+      player.SetFacingLeft(true);
+      player.Move(PLAYER_RUN_SPEED);  // Assuming left is negative X
+      player.SetWalking(true);
+    } else if(CurrentJoystickDirection == 2){ // Right
+      player.SetFacingLeft(false);
+      player.Move(-PLAYER_RUN_SPEED);   // Assuming right is positive X
+      player.SetWalking(true);
+    } else {
+      player.SetWalking(false);
+    }
+
+    // 3. Apply Jump and Physics
+    player.Jump(isJumpButtonHeld);
+    player.UpdatePhysics();
+    player.Update(); // Update the walking animation frame
+
+    // 4. Tell the main loop the math is done and it's time to draw!
     NewFrameReady = 1;
   }
 }
@@ -127,8 +154,7 @@ int main1(void){ // main1
   }
 }
 
-  AnimatedPlayer player(42, 127);
-  Background back1(0, 127, 0, background0_img);
+
 
 static const uint8_t CurrentLevelIndex = 0;
 
@@ -184,57 +210,58 @@ static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
 }
 
 // active game main
+// active game main
 int main(void) {
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
   PCBJoystick_Init();
-  Switch_Init();   // Initialize your switches (PB24 - PB27)
-  LED_Init();      // Initialize your LEDs (PB15 - PB17)
+  Switch_Init();   // Initialize your switches
+  LED_Init();      // Initialize your LEDs
 
-  ST7735_InitPrintf(INITR_BLACKTAB); // INITR_REDTAB for AdaFruit, INITR_BLACKTAB for HiLetGo
+  ST7735_InitPrintf(INITR_BLACKTAB); 
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
-  // LED_On(1<<15);
-  // LED_On(1<<16);
-  // LED_On(1<<17);
+
   back1.Draw();
   DrawLevel(CurrentLevelIndex);
   player.Draw();
 
-  
+  // Variables to remember where the player was before the interrupt moved them
+  int16_t oldPlayerX = player.x;
+  int16_t oldPlayerY = player.y;
+
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick at 80 MHz
   __enable_irq();
+
   while(1){
+    // Wait for the Timer Interrupt to finish the physics math
     if(NewFrameReady == 0){
       continue;
     }
+    
+    // Clear the flag safely
     __disable_irq();
-    uint32_t direction = CurrentJoystickDirection;
     NewFrameReady = 0;
     __enable_irq();
 
-    Rect previousPlayerArea = GetPlayerArea(player.x, player.y);
+    // 1. Get the area where the player USED to be to erase them
+    Rect previousPlayerArea = GetPlayerArea(oldPlayerX, oldPlayerY);
 
-    if(direction == 1){
-      player.SetFacingLeft(true);
-      player.Move(PLAYER_RUN_SPEED);
-      player.SetWalking(true);
-    } else if(direction == 2){
-      player.SetFacingLeft(false);
-      player.Move(-PLAYER_RUN_SPEED);
-      player.SetWalking(true);
-    } else {
-      player.SetWalking(false);
-    }
-
-    player.Update();
-
-    // The old and new player locations are outdated on the LCD and need to be restored.
+    // 2. The player.x and player.y have already been updated by the ISR!
+    // So we combine the old area and the new area
     Rect outdatedArea = CombineAreas(previousPlayerArea, GetPlayerArea(player.x, player.y));
+    
+    // 3. Redraw the background and level where the player moved
     RestoreBackgroundArea(outdatedArea);
     RedrawLevelPiecesInArea(CurrentLevelIndex, outdatedArea);
+    
+    // 4. Draw the player in their new position
     player.Draw();
+
+    // 5. Save the new position so we can erase it next frame
+    oldPlayerX = player.x;
+    oldPlayerY = player.y;
   }
 }
 
