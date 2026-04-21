@@ -19,5 +19,5 @@ uint32_t Switch_In(void){
     // write this
   uint32_t data = GPIOA->DIN31_0;
   data = (data>>24)&0x0F;
-  return data; // return 0; //replace this your code
+  return data;
 }

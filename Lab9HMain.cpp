@@ -155,18 +155,22 @@ static Rect CombineAreas(Rect a, Rect b){
   return r;
 }
 
-static void RestoreBackgroundArea(Rect outdatedArea){
-  if(outdatedArea.x0 < 0) outdatedArea.x0 = 0;
-  if(outdatedArea.y0 < 0) outdatedArea.y0 = 0;
-  if(outdatedArea.x1 > 159) outdatedArea.x1 = 159;
-  if(outdatedArea.y1 > 127) outdatedArea.y1 = 127;
+static Rect PadArea(Rect area, int16_t padding){
+  area.x0 -= padding;
+  area.y0 -= padding;
+  area.x1 += padding;
+  area.y1 += padding;
+  return area;
+}
 
-  for(int16_t y = outdatedArea.y0; y <= outdatedArea.y1; y++){
-    uint16_t sourceRow = 127 - y;
-    for(int16_t x = outdatedArea.x0; x <= outdatedArea.x1; x++){
-      ST7735_DrawPixel(x, y, background0[sourceRow * 160 + x]);
-    }
-  }
+static void RestoreBackgroundArea(Rect outdatedArea){
+  drawRowsOfColorForBackground(outdatedArea.x0, outdatedArea.y0, outdatedArea.x1, outdatedArea.y1);
+}
+
+static void RedrawChangedArea(Rect area){
+  area = PadArea(area, 2);
+  RestoreBackgroundArea(area);
+  RedrawLevelPiecesInArea(CurrentLevelIndex, area);
 }
 
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
@@ -257,28 +261,21 @@ int main(void) {
 
     player.Update();
 
-    Rect levelDirtyArea = {0, 0, 0, 0};
-    bool hasLevelDirtyArea = false;
+    Rect redrawArea = CombineAreas(previousPlayerArea, currentPlayerArea);
+
     bool interactButtonPressed = interactButtonHeld && !wasInteractButtonHeld;
-    if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &levelDirtyArea)){
-      hasLevelDirtyArea = true;
+    Rect chestArea;
+    if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &chestArea)){
+      redrawArea = CombineAreas(redrawArea, chestArea);
     }
     wasInteractButtonHeld = interactButtonHeld;
 
-    Rect animationDirtyArea;
-    if(UpdateLevelAnimations(CurrentLevelIndex, &animationDirtyArea)){
-      levelDirtyArea = hasLevelDirtyArea ? CombineAreas(levelDirtyArea, animationDirtyArea) : animationDirtyArea;
-      hasLevelDirtyArea = true;
-    }
-
-    Rect outdatedArea = CombineAreas(previousPlayerArea, currentPlayerArea);
-    if(hasLevelDirtyArea){
-      outdatedArea = CombineAreas(outdatedArea, levelDirtyArea);
+    Rect animatedChestArea;
+    if(UpdateLevelAnimations(CurrentLevelIndex, &animatedChestArea)){
+      redrawArea = CombineAreas(redrawArea, animatedChestArea);
     }
     
-    RestoreBackgroundArea(outdatedArea);
-    RedrawLevelPiecesInArea(CurrentLevelIndex, outdatedArea);
-    
+    RedrawChangedArea(redrawArea);
     player.Draw();
   }
 }
