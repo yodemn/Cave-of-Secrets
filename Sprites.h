@@ -14,23 +14,8 @@
 #define PLAYER_MAX_X (160 - PLAYER_SPRITE_WIDTH)
 #define PLAYER_RUN_SPEED 3
 
-extern ImageData player_img;
 extern const ImageData PlayerIdleFrames[PLAYER_IDLE_FRAME_COUNT];
 extern const ImageData PlayerWalkFrames[PLAYER_WALK_FRAME_COUNT];
-
-class Sprite{
-    public:
-        int x;
-        int y;
-        int velocityY;
-        ImageData image;
-
-        //Constructor and functions
-        Sprite(int startX, int startY, ImageData img);
-        void Draw();
-        void Move(); 
-        void Jump();
-};
 
 class AnimatedPlayer{
     public:

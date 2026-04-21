@@ -22,6 +22,7 @@
 #include "Sprites.h"
 #include "Backgrounds.h"
 #include "TileSprites.h"
+#include "Level.h"
 #include "PCBJoystick.h"
 
 extern "C" void __disable_irq(void);
@@ -47,19 +48,24 @@ uint32_t Random(uint32_t n){
 
 SlidePot Sensor(1674,173); // copy calibration from Lab 7
 
+static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select);
+
+volatile uint32_t JoyX = 2048;
+volatile uint32_t JoyY = 2048;
+volatile uint32_t JoySelect = 0;
+volatile uint32_t GameDirection = 0;
+volatile uint8_t NeedDraw = 0;
+
 // games  engine runs at 30Hz
-void TIMG12_IRQHandler(void){uint32_t pos,msg;
+void TIMG12_IRQHandler(void){
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
-    GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
-    GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
-// game engine goes here
-    // 1) sample slide pot
-    // 2) read input switches
-    // 3) move sprites
-    // 4) start sounds
-    // 5) set semaphore
-    // NO LCD OUTPUT IN INTERRUPT SERVICE ROUTINES
-    GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
+    uint32_t x, y, select;
+    PCBJoystick_In(&x, &y, &select);
+    JoyX = x;
+    JoyY = y;
+    JoySelect = select;
+    GameDirection = JoystickDirection(x, y, select);
+    NeedDraw = 1;
   }
 }
 uint8_t TExaS_LaunchPadLogicPB27PB26(void){
@@ -121,19 +127,13 @@ int main1(void){ // main1
   }
 }
 
-  extern ImageData player_img;
   AnimatedPlayer player(42, 127);
   Background back1(0, 127, 0, background0_img);
 
-struct DirtyRect {
-  int16_t x0;
-  int16_t y0;
-  int16_t x1;
-  int16_t y1;
-};
+static const uint8_t CurrentLevelIndex = 0;
 
-static DirtyRect PlayerRect(int16_t x, int16_t y){
-  DirtyRect r;
+static LevelRect PlayerRect(int16_t x, int16_t y){
+  LevelRect r;
   r.x0 = x;
   r.y0 = y - PLAYER_SPRITE_HEIGHT + 1;
   r.x1 = x + PLAYER_SPRITE_WIDTH - 1;
@@ -141,8 +141,8 @@ static DirtyRect PlayerRect(int16_t x, int16_t y){
   return r;
 }
 
-static DirtyRect UnionRect(DirtyRect a, DirtyRect b){
-  DirtyRect r;
+static LevelRect UnionRect(LevelRect a, LevelRect b){
+  LevelRect r;
   r.x0 = (a.x0 < b.x0) ? a.x0 : b.x0;
   r.y0 = (a.y0 < b.y0) ? a.y0 : b.y0;
   r.x1 = (a.x1 > b.x1) ? a.x1 : b.x1;
@@ -150,53 +150,7 @@ static DirtyRect UnionRect(DirtyRect a, DirtyRect b){
   return r;
 }
 
-static bool Intersects(DirtyRect a, DirtyRect b){
-  return (a.x0 <= b.x1) && (a.x1 >= b.x0) && (a.y0 <= b.y1) && (a.y1 >= b.y0);
-}
-
-static DirtyRect ImageRect(int16_t x, int16_t y, ImageData image){
-  DirtyRect r;
-  r.x0 = x;
-  r.y0 = y - image.height + 1;
-  r.x1 = x + image.width - 1;
-  r.y1 = y;
-  return r;
-}
-
-static DirtyRect PlatformRect(int16_t x, int16_t y, uint8_t tiles){
-  DirtyRect r;
-  r.x0 = x;
-  r.y0 = y - TILE_SPRITE_HEIGHT + 1;
-  r.x1 = x + tiles * TILE_SPRITE_WIDTH - 1;
-  r.y1 = y;
-  return r;
-}
-
-static void DrawImageChromaClipped(int16_t x, int16_t y, ImageData image, DirtyRect clip){
-  DirtyRect imageRect = ImageRect(x, y, image);
-  if(!Intersects(imageRect, clip)){
-    return;
-  }
-
-  int16_t x0 = (imageRect.x0 > clip.x0) ? imageRect.x0 : clip.x0;
-  int16_t y0 = (imageRect.y0 > clip.y0) ? imageRect.y0 : clip.y0;
-  int16_t x1 = (imageRect.x1 < clip.x1) ? imageRect.x1 : clip.x1;
-  int16_t y1 = (imageRect.y1 < clip.y1) ? imageRect.y1 : clip.y1;
-
-  for(int16_t screenY = y0; screenY <= y1; screenY++){
-    int16_t row = screenY - imageRect.y0;
-    int16_t sourceRow = image.height - 1 - row;
-    for(int16_t screenX = x0; screenX <= x1; screenX++){
-      int16_t sourceCol = screenX - imageRect.x0;
-      uint16_t color = image.pixels[sourceRow * image.width + sourceCol];
-      if(color != TILE_CHROMA_KEY){
-        ST7735_DrawPixel(screenX, screenY, color);
-      }
-    }
-  }
-}
-
-static void RestoreBackgroundRect(DirtyRect r){
+static void RestoreBackgroundRect(LevelRect r){
   if(r.x0 < 0) r.x0 = 0;
   if(r.y0 < 0) r.y0 = 0;
   if(r.x1 > 159) r.x1 = 159;
@@ -207,33 +161,6 @@ static void RestoreBackgroundRect(DirtyRect r){
     for(int16_t x = r.x0; x <= r.x1; x++){
       ST7735_DrawPixel(x, y, background0[sourceRow * 160 + x]);
     }
-  }
-}
-
-static void DrawLevelPiecesInRect(DirtyRect dirty){
-  if(Intersects(dirty, ImageRect(2, 127, SmallTreeImage))){
-    DrawImageChromaClipped(2, 127, SmallTreeImage, dirty);
-  }
-  if(Intersects(dirty, ImageRect(103, 127, LargeTreeImage))){
-    DrawImageChromaClipped(103, 127, LargeTreeImage, dirty);
-  }
-  if(Intersects(dirty, PlatformRect(8, 116, 6))){
-    DrawPlatformRun(8, 116, 6);
-  }
-  if(Intersects(dirty, PlatformRect(54, 96, 7))){
-    DrawPlatformRun(54, 96, 7);
-  }
-  if(Intersects(dirty, PlatformRect(12, 78, 5))){
-    DrawPlatformRun(12, 78, 5);
-  }
-  if(Intersects(dirty, PlatformRect(94, 70, 5))){
-    DrawPlatformRun(94, 70, 5);
-  }
-  if(Intersects(dirty, PlatformRect(36, 52, 8))){
-    DrawPlatformRun(36, 52, 8);
-  }
-  if(Intersects(dirty, PlatformRect(73, 35, 6))){
-    DrawPlatformRun(73, 35, 6);
   }
 }
 
@@ -264,20 +191,30 @@ int main(void) {
   PCBJoystick_Init();
   Switch_Init();   // Initialize your switches (PB24 - PB27)
   LED_Init();      // Initialize your LEDs (PB15 - PB17)
+
   ST7735_InitPrintf(INITR_BLACKTAB); // INITR_REDTAB for AdaFruit, INITR_BLACKTAB for HiLetGo
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
-  LED_On(1<<15);
-  LED_On(1<<16);
-  LED_On(1<<17);
+  // LED_On(1<<15);
+  // LED_On(1<<16);
+  // LED_On(1<<17);
   back1.Draw();
-  DrawExampleLevel();
+  DrawLevel(CurrentLevelIndex);
   player.Draw();
+
+  
+  TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick at 80 MHz
+  __enable_irq();
   while(1){
-    uint32_t joyX, joyY, joySelect;
-    PCBJoystick_In(&joyX, &joyY, &joySelect);
-    uint32_t direction = JoystickDirection(joyX, joyY, joySelect);
-    DirtyRect oldPlayerRect = PlayerRect(player.x, player.y);
+    if(NeedDraw == 0){
+      continue;
+    }
+    __disable_irq();
+    uint32_t direction = GameDirection;
+    NeedDraw = 0;
+    __enable_irq();
+
+    LevelRect oldPlayerRect = PlayerRect(player.x, player.y);
 
     if(direction == 1){
       player.SetFacingLeft(true);
@@ -293,11 +230,10 @@ int main(void) {
 
     player.Update();
 
-    DirtyRect dirty = UnionRect(oldPlayerRect, PlayerRect(player.x, player.y));
+    LevelRect dirty = UnionRect(oldPlayerRect, PlayerRect(player.x, player.y));
     RestoreBackgroundRect(dirty);
-    DrawLevelPiecesInRect(dirty);
+    DrawLevelPiecesInRect(CurrentLevelIndex, dirty);
     player.Draw();
-    Clock_Delay1ms(40);
   }
 }
 
@@ -327,7 +263,7 @@ int main2(void){ // main2
   LED_On(1<<16);
   LED_On(1<<17);
   back1.Draw();
-  DrawExampleLevel();
+  DrawLevel(CurrentLevelIndex);
   // ST7735_FillScreen(0x0000);   // set screen to black
   // ST7735_SetCursor(1, 1);
   // ST7735_OutString((char *)"GAME OVER");

@@ -18,25 +18,6 @@ static void DrawPlayerImage(int16_t x, int16_t y, ImageData image, bool flipX){
     }
 }
 
-Sprite::Sprite(int startX, int startY, ImageData img){
-    x = startX;
-    y = startY;
-    velocityY = 0;
-    image = img;
-}
-
-void Sprite::Jump(){
-    ;
-}
-
-void Sprite::Move(){
-    y += velocityY;
-}
-
-void Sprite::Draw(){
-    DrawPlayerImage(x, y, image, false);
-}
-
 AnimatedPlayer::AnimatedPlayer(int startX, int startY){
     x = startX;
     y = startY;

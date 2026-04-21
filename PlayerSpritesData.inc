@@ -474,9 +474,3 @@ const ImageData PlayerWalkFrames[PLAYER_WALK_FRAME_COUNT] = {
   { PlayerWalkSprite_6, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT },
   { PlayerWalkSprite_7, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT },
 };
-
-ImageData player_img = {
-    PlayerIdleSprite_0,
-    PLAYER_SPRITE_WIDTH,
-    PLAYER_SPRITE_HEIGHT
-};
