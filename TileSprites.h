@@ -13,11 +13,15 @@
 #define LARGE_TREE_HEIGHT 82
 #define SMALL_TREE_WIDTH 36
 #define SMALL_TREE_HEIGHT 56
+#define CHEST_SPRITE_WIDTH 24
+#define CHEST_SPRITE_HEIGHT 14
+#define CHEST_OPEN_FRAME_COUNT 4
 
 extern const uint16_t LargeTreeSprite[LARGE_TREE_WIDTH * LARGE_TREE_HEIGHT];
 extern ImageData LargeTreeImage;
 extern const uint16_t SmallTreeSprite[SMALL_TREE_WIDTH * SMALL_TREE_HEIGHT];
 extern ImageData SmallTreeImage;
+extern ImageData ChestOpenFrames[CHEST_OPEN_FRAME_COUNT];
 
 extern const uint16_t TileSprite_05_04[TILE_SPRITE_WIDTH * TILE_SPRITE_HEIGHT];
 extern ImageData TileImage_05_04;

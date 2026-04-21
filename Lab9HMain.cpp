@@ -201,6 +201,7 @@ int main(void) {
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
 
+  ResetLevelObjectStates(CurrentLevelIndex);
   back1.Draw();
   DrawLevel(CurrentLevelIndex);
   player.Draw();
@@ -208,6 +209,7 @@ int main(void) {
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick at 80 MHz
   __enable_irq();
 
+  bool wasInteractButtonHeld = false;
   while(1){
     if(NewFrameReady == 0){
       continue;
@@ -216,6 +218,7 @@ int main(void) {
     __disable_irq();
     uint32_t direction = CurrentJoystickDirection;
     bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
+    bool interactButtonHeld = (CurrentJoystickSelect != 0);
     NewFrameReady = 0;
     __enable_irq();
 
@@ -249,7 +252,24 @@ int main(void) {
 
     player.Update();
 
+    Rect levelDirtyArea = {0, 0, 0, 0};
+    bool hasLevelDirtyArea = false;
+    bool interactButtonPressed = interactButtonHeld && !wasInteractButtonHeld;
+    if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &levelDirtyArea)){
+      hasLevelDirtyArea = true;
+    }
+    wasInteractButtonHeld = interactButtonHeld;
+
+    Rect animationDirtyArea;
+    if(UpdateLevelAnimations(CurrentLevelIndex, &animationDirtyArea)){
+      levelDirtyArea = hasLevelDirtyArea ? CombineAreas(levelDirtyArea, animationDirtyArea) : animationDirtyArea;
+      hasLevelDirtyArea = true;
+    }
+
     Rect outdatedArea = CombineAreas(previousPlayerArea, currentPlayerArea);
+    if(hasLevelDirtyArea){
+      outdatedArea = CombineAreas(outdatedArea, levelDirtyArea);
+    }
     
     RestoreBackgroundArea(outdatedArea);
     RedrawLevelPiecesInArea(CurrentLevelIndex, outdatedArea);

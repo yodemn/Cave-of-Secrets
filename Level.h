@@ -18,7 +18,8 @@ struct LevelPlatform {
 
 enum LevelObjectType {
   LEVEL_OBJECT_SMALL_TREE,
-  LEVEL_OBJECT_LARGE_TREE
+  LEVEL_OBJECT_LARGE_TREE,
+  LEVEL_OBJECT_CHEST
 };
 
 struct LevelObject {
@@ -39,6 +40,9 @@ extern const LevelDefinition Levels[];
 
 void DrawLevel(uint8_t levelIndex);
 void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea);
+void ResetLevelObjectStates(uint8_t levelIndex);
+bool TryOpenNearbyChest(uint8_t levelIndex, Rect playerArea, Rect *dirtyArea);
+bool UpdateLevelAnimations(uint8_t levelIndex, Rect *dirtyArea);
 bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *landingY);
 bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea);
 
