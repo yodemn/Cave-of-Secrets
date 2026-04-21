@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-struct LevelRect {
+struct Rect {
   int16_t x0;
   int16_t y0;
   int16_t x1;
@@ -38,6 +38,6 @@ extern const uint8_t LevelCount;
 extern const LevelDefinition Levels[];
 
 void DrawLevel(uint8_t levelIndex);
-void DrawLevelPiecesInRect(uint8_t levelIndex, LevelRect dirty);
+void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea);
 
 #endif

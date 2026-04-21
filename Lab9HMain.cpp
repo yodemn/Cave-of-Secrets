@@ -48,24 +48,24 @@ uint32_t Random(uint32_t n){
 
 SlidePot Sensor(1674,173); // copy calibration from Lab 7
 
-static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select);
+static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select);
 
-volatile uint32_t JoyX = 2048;
-volatile uint32_t JoyY = 2048;
-volatile uint32_t JoySelect = 0;
-volatile uint32_t GameDirection = 0;
-volatile uint8_t NeedDraw = 0;
+volatile uint32_t CurrentJoystickX = 2048;
+volatile uint32_t CurrentJoystickY = 2048;
+volatile uint32_t CurrentJoystickSelect = 0;
+volatile uint32_t CurrentJoystickDirection = 0;
+volatile uint8_t NewFrameReady = 0;
 
-// games  engine runs at 30Hz
+// game engine runs at 30Hz
 void TIMG12_IRQHandler(void){
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
     uint32_t x, y, select;
     PCBJoystick_In(&x, &y, &select);
-    JoyX = x;
-    JoyY = y;
-    JoySelect = select;
-    GameDirection = JoystickDirection(x, y, select);
-    NeedDraw = 1;
+    CurrentJoystickX = x;
+    CurrentJoystickY = y;
+    CurrentJoystickSelect = select;
+    CurrentJoystickDirection = GetJoystickDirection(x, y, select);
+    NewFrameReady = 1;
   }
 }
 uint8_t TExaS_LaunchPadLogicPB27PB26(void){
@@ -132,8 +132,8 @@ int main1(void){ // main1
 
 static const uint8_t CurrentLevelIndex = 0;
 
-static LevelRect PlayerRect(int16_t x, int16_t y){
-  LevelRect r;
+static Rect GetPlayerArea(int16_t x, int16_t y){
+  Rect r;
   r.x0 = x;
   r.y0 = y - PLAYER_SPRITE_HEIGHT + 1;
   r.x1 = x + PLAYER_SPRITE_WIDTH - 1;
@@ -141,8 +141,8 @@ static LevelRect PlayerRect(int16_t x, int16_t y){
   return r;
 }
 
-static LevelRect UnionRect(LevelRect a, LevelRect b){
-  LevelRect r;
+static Rect CombineAreas(Rect a, Rect b){
+  Rect r;
   r.x0 = (a.x0 < b.x0) ? a.x0 : b.x0;
   r.y0 = (a.y0 < b.y0) ? a.y0 : b.y0;
   r.x1 = (a.x1 > b.x1) ? a.x1 : b.x1;
@@ -150,21 +150,21 @@ static LevelRect UnionRect(LevelRect a, LevelRect b){
   return r;
 }
 
-static void RestoreBackgroundRect(LevelRect r){
-  if(r.x0 < 0) r.x0 = 0;
-  if(r.y0 < 0) r.y0 = 0;
-  if(r.x1 > 159) r.x1 = 159;
-  if(r.y1 > 127) r.y1 = 127;
+static void RestoreBackgroundArea(Rect outdatedArea){
+  if(outdatedArea.x0 < 0) outdatedArea.x0 = 0;
+  if(outdatedArea.y0 < 0) outdatedArea.y0 = 0;
+  if(outdatedArea.x1 > 159) outdatedArea.x1 = 159;
+  if(outdatedArea.y1 > 127) outdatedArea.y1 = 127;
 
-  for(int16_t y = r.y0; y <= r.y1; y++){
+  for(int16_t y = outdatedArea.y0; y <= outdatedArea.y1; y++){
     uint16_t sourceRow = 127 - y;
-    for(int16_t x = r.x0; x <= r.x1; x++){
+    for(int16_t x = outdatedArea.x0; x <= outdatedArea.x1; x++){
       ST7735_DrawPixel(x, y, background0[sourceRow * 160 + x]);
     }
   }
 }
 
-static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select){
+static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   if(select){
     return 5; // button
   }
@@ -183,7 +183,7 @@ static uint32_t JoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   return 0; // center
 }
 
-// testing main
+// active game main
 int main(void) {
   __disable_irq();
   PLL_Init(); // set bus speed
@@ -206,15 +206,15 @@ int main(void) {
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick at 80 MHz
   __enable_irq();
   while(1){
-    if(NeedDraw == 0){
+    if(NewFrameReady == 0){
       continue;
     }
     __disable_irq();
-    uint32_t direction = GameDirection;
-    NeedDraw = 0;
+    uint32_t direction = CurrentJoystickDirection;
+    NewFrameReady = 0;
     __enable_irq();
 
-    LevelRect oldPlayerRect = PlayerRect(player.x, player.y);
+    Rect previousPlayerArea = GetPlayerArea(player.x, player.y);
 
     if(direction == 1){
       player.SetFacingLeft(true);
@@ -230,9 +230,10 @@ int main(void) {
 
     player.Update();
 
-    LevelRect dirty = UnionRect(oldPlayerRect, PlayerRect(player.x, player.y));
-    RestoreBackgroundRect(dirty);
-    DrawLevelPiecesInRect(CurrentLevelIndex, dirty);
+    // The old and new player locations are outdated on the LCD and need to be restored.
+    Rect outdatedArea = CombineAreas(previousPlayerArea, GetPlayerArea(player.x, player.y));
+    RestoreBackgroundArea(outdatedArea);
+    RedrawLevelPiecesInArea(CurrentLevelIndex, outdatedArea);
     player.Draw();
   }
 }

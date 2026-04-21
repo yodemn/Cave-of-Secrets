@@ -27,12 +27,12 @@ const LevelDefinition Levels[] = {
 
 const uint8_t LevelCount = sizeof(Levels) / sizeof(Levels[0]);
 
-static bool RectsIntersect(LevelRect a, LevelRect b){
+static bool AreasOverlap(Rect a, Rect b){
   return (a.x0 <= b.x1) && (a.x1 >= b.x0) && (a.y0 <= b.y1) && (a.y1 >= b.y0);
 }
 
-static LevelRect ImageRect(int16_t x, int16_t y, ImageData image){
-  LevelRect r;
+static Rect GetImageArea(int16_t x, int16_t y, ImageData image){
+  Rect r;
   r.x0 = x;
   r.y0 = y - image.height + 1;
   r.x1 = x + image.width - 1;
@@ -40,8 +40,8 @@ static LevelRect ImageRect(int16_t x, int16_t y, ImageData image){
   return r;
 }
 
-static LevelRect PlatformRect(const LevelPlatform &platform){
-  LevelRect r;
+static Rect GetPlatformArea(const LevelPlatform &platform){
+  Rect r;
   r.x0 = platform.x;
   r.y0 = platform.y - TILE_SPRITE_HEIGHT + 1;
   r.x1 = platform.x + platform.tiles * TILE_SPRITE_WIDTH - 1;
@@ -60,23 +60,23 @@ static void DrawObject(const LevelObject &object){
   DrawImageChroma(object.x, object.y, ObjectImage(object.type));
 }
 
-static void DrawObjectClipped(const LevelObject &object, LevelRect clip){
+static void DrawObjectInsideArea(const LevelObject &object, Rect redrawArea){
   ImageData image = ObjectImage(object.type);
-  LevelRect imageRect = ImageRect(object.x, object.y, image);
-  if(!RectsIntersect(imageRect, clip)){
+  Rect imageArea = GetImageArea(object.x, object.y, image);
+  if(!AreasOverlap(imageArea, redrawArea)){
     return;
   }
 
-  int16_t x0 = (imageRect.x0 > clip.x0) ? imageRect.x0 : clip.x0;
-  int16_t y0 = (imageRect.y0 > clip.y0) ? imageRect.y0 : clip.y0;
-  int16_t x1 = (imageRect.x1 < clip.x1) ? imageRect.x1 : clip.x1;
-  int16_t y1 = (imageRect.y1 < clip.y1) ? imageRect.y1 : clip.y1;
+  int16_t x0 = (imageArea.x0 > redrawArea.x0) ? imageArea.x0 : redrawArea.x0;
+  int16_t y0 = (imageArea.y0 > redrawArea.y0) ? imageArea.y0 : redrawArea.y0;
+  int16_t x1 = (imageArea.x1 < redrawArea.x1) ? imageArea.x1 : redrawArea.x1;
+  int16_t y1 = (imageArea.y1 < redrawArea.y1) ? imageArea.y1 : redrawArea.y1;
 
   for(int16_t screenY = y0; screenY <= y1; screenY++){
-    int16_t row = screenY - imageRect.y0;
+    int16_t row = screenY - imageArea.y0;
     int16_t sourceRow = image.height - 1 - row;
     for(int16_t screenX = x0; screenX <= x1; screenX++){
-      int16_t sourceCol = screenX - imageRect.x0;
+      int16_t sourceCol = screenX - imageArea.x0;
       uint16_t color = image.pixels[sourceRow * image.width + sourceCol];
       if(color != TILE_CHROMA_KEY){
         ST7735_DrawPixel(screenX, screenY, color);
@@ -99,19 +99,19 @@ void DrawLevel(uint8_t levelIndex){
   }
 }
 
-void DrawLevelPiecesInRect(uint8_t levelIndex, LevelRect dirty){
+void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea){
   if(levelIndex >= LevelCount){
     return;
   }
 
   const LevelDefinition &level = Levels[levelIndex];
   for(uint8_t i = 0; i < level.objectCount; i++){
-    if(RectsIntersect(dirty, ImageRect(level.objects[i].x, level.objects[i].y, ObjectImage(level.objects[i].type)))){
-      DrawObjectClipped(level.objects[i], dirty);
+    if(AreasOverlap(outdatedArea, GetImageArea(level.objects[i].x, level.objects[i].y, ObjectImage(level.objects[i].type)))){
+      DrawObjectInsideArea(level.objects[i], outdatedArea);
     }
   }
   for(uint8_t i = 0; i < level.platformCount; i++){
-    if(RectsIntersect(dirty, PlatformRect(level.platforms[i]))){
+    if(AreasOverlap(outdatedArea, GetPlatformArea(level.platforms[i]))){
       DrawPlatformRun(level.platforms[i].x, level.platforms[i].y, level.platforms[i].tiles);
     }
   }
