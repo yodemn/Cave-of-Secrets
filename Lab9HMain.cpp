@@ -173,16 +173,16 @@ static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   if(select){
     return 5; // button
   }
-  if(x < 1500){
-    return 4; // down
-  }
-  if(x > 2600){
-    return 3; // up
-  }
-  if(y < 1500){
+  // if(x < 1500){
+  //   return 4; // down
+  // }
+  // if(x > 2600){
+  //   return 3; // up
+  // }
+  if(y < 2000){
     return 1; // left
   }
-  if(y > 2600){
+  if(y > 2100){
     return 2; // right
   }
   return 0; // center
@@ -218,7 +218,12 @@ int main(void) {
     __disable_irq();
     uint32_t direction = CurrentJoystickDirection;
     bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
-    bool interactButtonHeld = (CurrentJoystickSelect != 0);
+    bool interactButtonHeld;
+    if((GPIOA->DIN31_0 & (1<<26)) != 0) {
+      interactButtonHeld = true;
+    }  else {
+      interactButtonHeld = false;
+    }
     NewFrameReady = 0;
     __enable_irq();
 
