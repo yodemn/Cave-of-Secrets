@@ -62,6 +62,7 @@ volatile uint32_t CurrentJoystickSelect = 0;
 volatile uint32_t CurrentJoystickDirection = 0;
 volatile uint8_t CurrentJumpButtonHeld = 0;
 volatile uint8_t NewFrameReady = 0;
+bool chestLEDOn = false;
 
 // game engine runs at 30Hz
 void TIMG12_IRQHandler(void){
@@ -265,8 +266,20 @@ int main(void) {
 
     bool interactButtonPressed = interactButtonHeld && !wasInteractButtonHeld;
     Rect chestArea;
+    uint32_t count;
     if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &chestArea)){
       redrawArea = CombineAreas(redrawArea, chestArea);
+      chestLEDOn = true;
+      LED_On(1<<16);
+      count = 15;
+    }
+
+    if(chestLEDOn && count <= 0) {
+      count = 0;
+      LED_Off(1<<16);
+      chestLEDOn = false;
+    } else if (chestLEDOn) {
+      count--;
     }
     wasInteractButtonHeld = interactButtonHeld;
 
