@@ -45,6 +45,7 @@ uint32_t Random32(void){
 uint32_t Random(uint32_t n){
   return (Random32()>>16)%n;
 }
+ 
 
 SlidePot Sensor(1674,173); // copy calibration from Lab 7
   AnimatedPlayer player(42, 127);
