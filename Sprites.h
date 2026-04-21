@@ -13,6 +13,7 @@
 #define PLAYER_MIN_X 0
 #define PLAYER_MAX_X (160 - PLAYER_SPRITE_WIDTH)
 #define PLAYER_RUN_SPEED 3
+#define PLAYER_JUMP_VELOCITY -8
 
 extern const ImageData PlayerIdleFrames[PLAYER_IDLE_FRAME_COUNT];
 extern const ImageData PlayerWalkFrames[PLAYER_WALK_FRAME_COUNT];
@@ -28,8 +29,6 @@ class AnimatedPlayer{
         int velocityY;
         int gravity;
         bool isGrounded;
-        int jumpTimer;
-        const int MAX_JUMP_TIME = 15;
         bool wasJumpHeldLastFrame;
         AnimatedPlayer(int startX, int startY);
         void SetWalking(bool isWalking);
