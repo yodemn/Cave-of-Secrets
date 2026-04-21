@@ -3,12 +3,12 @@
 #include "../inc/ST7735.h"
 
 static const LevelPlatform Level0Platforms[] = {
-  {8, 116, 6},
-  {54, 96, 7},
-  {12, 78, 5},
-  {94, 70, 5},
-  {36, 52, 8},
-  {73, 35, 6}
+  {6, 118, 7},
+  {54, 96, 6},
+  {13, 74, 5},
+  {96, 68, 5},
+  {38, 48, 7},
+  {79, 29, 5}
 };
 
 static const LevelObject Level0Objects[] = {
@@ -49,6 +49,18 @@ static Rect GetPlatformArea(const LevelPlatform &platform){
   return r;
 }
 
+static int16_t GetPlatformLandingY(const LevelPlatform &platform){
+  return platform.y - TILE_SPRITE_HEIGHT;
+}
+
+static bool PlayerFeetOverlapPlatform(Rect playerArea, const LevelPlatform &platform){
+  int16_t platformX0 = platform.x;
+  int16_t platformX1 = platform.x + platform.tiles * TILE_SPRITE_WIDTH - 1;
+  int16_t playerFootX0 = playerArea.x0 + 2;
+  int16_t playerFootX1 = playerArea.x1 - 2;
+  return (playerFootX0 <= platformX1) && (playerFootX1 >= platformX0);
+}
+
 static ImageData ObjectImage(LevelObjectType type){
   if(type == LEVEL_OBJECT_LARGE_TREE){
     return LargeTreeImage;
@@ -83,6 +95,49 @@ static void DrawObjectInsideArea(const LevelObject &object, Rect redrawArea){
       }
     }
   }
+}
+
+bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *landingY){
+  if(levelIndex >= LevelCount){
+    return false;
+  }
+
+  const LevelDefinition &level = Levels[levelIndex];
+  bool foundLanding = false;
+  int16_t bestLandingY = 127;
+
+  for(uint8_t i = 0; i < level.platformCount; i++){
+    const LevelPlatform &platform = level.platforms[i];
+    int16_t platformLandingY = GetPlatformLandingY(platform);
+    bool crossedPlatformTop = (previousPlayerArea.y1 <= platformLandingY) && (currentPlayerArea.y1 >= platformLandingY);
+
+    if(crossedPlatformTop && PlayerFeetOverlapPlatform(currentPlayerArea, platform)){
+      if(!foundLanding || platformLandingY < bestLandingY){
+        bestLandingY = platformLandingY;
+        foundLanding = true;
+      }
+    }
+  }
+
+  if(foundLanding && landingY){
+    *landingY = bestLandingY;
+  }
+  return foundLanding;
+}
+
+bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea){
+  if(levelIndex >= LevelCount){
+    return false;
+  }
+
+  const LevelDefinition &level = Levels[levelIndex];
+  for(uint8_t i = 0; i < level.platformCount; i++){
+    const LevelPlatform &platform = level.platforms[i];
+    if(playerArea.y1 == GetPlatformLandingY(platform) && PlayerFeetOverlapPlatform(playerArea, platform)){
+      return true;
+    }
+  }
+  return false;
 }
 
 void DrawLevel(uint8_t levelIndex){

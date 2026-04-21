@@ -5,8 +5,8 @@
 #ifndef Sprites_H
 #define Sprites_H
 
-#define PLAYER_SPRITE_WIDTH 18
-#define PLAYER_SPRITE_HEIGHT 23
+#define PLAYER_SPRITE_WIDTH 16
+#define PLAYER_SPRITE_HEIGHT 20
 #define PLAYER_IDLE_FRAME_COUNT 4
 #define PLAYER_WALK_FRAME_COUNT 8
 #define PLAYER_CHROMA_KEY 0x07E0
@@ -35,6 +35,8 @@ class AnimatedPlayer{
         void SetWalking(bool isWalking);
         void Jump(bool buttonHeld);
         void UpdatePhysics();
+        void LandOn(int groundY);
+        void StartFalling();
         void SetFacingLeft(bool left);
         void Move(int dx);
         void Update();

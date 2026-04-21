@@ -48,17 +48,21 @@ uint32_t Random(uint32_t n){
  
 
 SlidePot Sensor(1674,173); // copy calibration from Lab 7
-  AnimatedPlayer player(42, 127);
-  Background back1(0, 127, 0, background0_img);
+static const int16_t PlayerStartX = 24;
+static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
+AnimatedPlayer player(PlayerStartX, PlayerStartY);
+Background back1(0, 127, 0, background0_img);
+static const uint8_t CurrentLevelIndex = 0;
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select);
+static Rect GetPlayerArea(int16_t x, int16_t y);
 
 volatile uint32_t CurrentJoystickX = 2048;
 volatile uint32_t CurrentJoystickY = 2048;
 volatile uint32_t CurrentJoystickSelect = 0;
 volatile uint32_t CurrentJoystickDirection = 0;
+volatile uint8_t CurrentJumpButtonHeld = 0;
 volatile uint8_t NewFrameReady = 0;
 
-// game engine runs at 30Hz
 // game engine runs at 30Hz
 void TIMG12_IRQHandler(void){
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
@@ -69,30 +73,8 @@ void TIMG12_IRQHandler(void){
     CurrentJoystickSelect = select;
     CurrentJoystickDirection = GetJoystickDirection(x, y, select);
 
-// 1. Read Jump Button SW4 (PA27)
     uint32_t portA_input = GPIOA->DIN31_0;
-    
-    // Positive Logic: Pin reads 1 when pressed
-    bool isJumpButtonHeld = (portA_input & (1<<27)) != 0;
-    // 2. Apply Joystick Movement
-    if(CurrentJoystickDirection == 1){ // Left
-      player.SetFacingLeft(true);
-      player.Move(PLAYER_RUN_SPEED);  // Assuming left is negative X
-      player.SetWalking(true);
-    } else if(CurrentJoystickDirection == 2){ // Right
-      player.SetFacingLeft(false);
-      player.Move(-PLAYER_RUN_SPEED);   // Assuming right is positive X
-      player.SetWalking(true);
-    } else {
-      player.SetWalking(false);
-    }
-
-    // 3. Apply Jump and Physics
-    player.Jump(isJumpButtonHeld);
-    player.UpdatePhysics();
-    player.Update(); // Update the walking animation frame
-
-    // 4. Tell the main loop the math is done and it's time to draw!
+    CurrentJumpButtonHeld = ((portA_input & (1<<27)) != 0);
     NewFrameReady = 1;
   }
 }
@@ -155,10 +137,6 @@ int main1(void){ // main1
   }
 }
 
-
-
-static const uint8_t CurrentLevelIndex = 0;
-
 static Rect GetPlayerArea(int16_t x, int16_t y){
   Rect r;
   r.x0 = x;
@@ -211,7 +189,6 @@ static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
 }
 
 // active game main
-// active game main
 int main(void) {
   __disable_irq();
   PLL_Init(); // set bus speed
@@ -228,41 +205,56 @@ int main(void) {
   DrawLevel(CurrentLevelIndex);
   player.Draw();
 
-  // Variables to remember where the player was before the interrupt moved them
-  int16_t oldPlayerX = player.x;
-  int16_t oldPlayerY = player.y;
-
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick at 80 MHz
   __enable_irq();
 
   while(1){
-    // Wait for the Timer Interrupt to finish the physics math
     if(NewFrameReady == 0){
       continue;
     }
     
-    // Clear the flag safely
     __disable_irq();
+    uint32_t direction = CurrentJoystickDirection;
+    bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
     NewFrameReady = 0;
     __enable_irq();
 
-    // 1. Get the area where the player USED to be to erase them
-    Rect previousPlayerArea = GetPlayerArea(oldPlayerX, oldPlayerY);
+    Rect previousPlayerArea = GetPlayerArea(player.x, player.y);
 
-    // 2. The player.x and player.y have already been updated by the ISR!
-    // So we combine the old area and the new area
-    Rect outdatedArea = CombineAreas(previousPlayerArea, GetPlayerArea(player.x, player.y));
+    if(direction == 1){
+      player.SetFacingLeft(true);
+      player.Move(PLAYER_RUN_SPEED);
+      player.SetWalking(true);
+    } else if(direction == 2){
+      player.SetFacingLeft(false);
+      player.Move(-PLAYER_RUN_SPEED);
+      player.SetWalking(true);
+    } else {
+      player.SetWalking(false);
+    }
+
+    if(player.isGrounded && player.y < 127 && !IsPlayerSupportedByPlatform(CurrentLevelIndex, GetPlayerArea(player.x, player.y))){
+      player.StartFalling();
+    }
+
+    player.Jump(jumpButtonHeld);
+    player.UpdatePhysics();
+
+    int16_t platformLandingY;
+    Rect currentPlayerArea = GetPlayerArea(player.x, player.y);
+    if(FindPlatformLanding(CurrentLevelIndex, previousPlayerArea, currentPlayerArea, &platformLandingY)){
+      player.LandOn(platformLandingY);
+      currentPlayerArea = GetPlayerArea(player.x, player.y);
+    }
+
+    player.Update();
+
+    Rect outdatedArea = CombineAreas(previousPlayerArea, currentPlayerArea);
     
-    // 3. Redraw the background and level where the player moved
     RestoreBackgroundArea(outdatedArea);
     RedrawLevelPiecesInArea(CurrentLevelIndex, outdatedArea);
     
-    // 4. Draw the player in their new position
     player.Draw();
-
-    // 5. Save the new position so we can erase it next frame
-    oldPlayerX = player.x;
-    oldPlayerY = player.y;
   }
 }
 

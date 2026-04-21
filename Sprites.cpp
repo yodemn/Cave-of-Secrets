@@ -33,19 +33,31 @@ AnimatedPlayer::AnimatedPlayer(int startX, int startY){
 }
 
 void AnimatedPlayer::UpdatePhysics(){
-    // Always apply gravity if they are in the air
     if(!isGrounded){
         velocityY += gravity; 
     }
 
-    // Move the player
     y += velocityY;
 
-    // Floor Collision (Replace 100 with your actual floor Y-coordinate)
-    if(y >= 128){ 
-        y = 128;           // Snap to floor
+    if(y >= 127){ 
+        y = 127;           // Snap to floor
         velocityY = 0;     // Stop falling
         isGrounded = true; // Ready to jump again
+    }
+}
+
+void AnimatedPlayer::LandOn(int groundY){
+    y = groundY;
+    velocityY = 0;
+    isGrounded = true;
+    jumpTimer = 0;
+}
+
+void AnimatedPlayer::StartFalling(){
+    if(isGrounded){
+        isGrounded = false;
+        velocityY = 0;
+        jumpTimer = MAX_JUMP_TIME;
     }
 }
 

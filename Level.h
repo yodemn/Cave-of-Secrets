@@ -39,5 +39,7 @@ extern const LevelDefinition Levels[];
 
 void DrawLevel(uint8_t levelIndex);
 void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea);
+bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *landingY);
+bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea);
 
 #endif
