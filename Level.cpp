@@ -63,7 +63,8 @@ void mainMenu(const char* title, const char* options[], int numOptions){
     // Draw the options dynamically!
     for(int i = 0; i < numOptions; i++) {
         ST7735_SetCursor(7, 5 + (i * 2)); 
-        ST7735_OutString((char*)options[i]);
+        int actualIndex = i + (language * numOptions);
+        ST7735_OutString((char*)options[actualIndex]);
     } 
 }
 

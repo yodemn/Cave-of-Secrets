@@ -82,6 +82,7 @@ uint8_t TExaS_LaunchPadLogicPB27PB26(void){
 
 typedef enum {English, Spanish, Portuguese, French} Language_t;
 Language_t myLanguage=English;
+int mylanguagenum = 0;
 typedef enum {HELLO, GOODBYE, LANGUAGE} phrase_t;
 const char Hello_English[] ="Hello";
 const char Hello_Spanish[] ="\xADHola!";
@@ -178,7 +179,11 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
     bool joystickReset = true; 
     int flashcur = 30;
 
+<<<<<<< Updated upstream
     mainMenu(title, options, numOptions);
+=======
+    mainMenu(title, options, numOptions, mylanguagenum);
+>>>>>>> Stashed changes
 
     // CRITICAL: Wait for the player to let go of the button first!
     // Otherwise, clicking a button on Menu 1 will instantly click Menu 2!
@@ -249,19 +254,22 @@ int main(void) {
   __enable_irq();
   
 // --- DEFINE YOUR MENUS ---
-  const char* mainOptions[] = {"Start Game", "Tutorial", "Languages"};
-  const char* tutorialOptions[] = {"Back to Menu"};
-  const char* langOptions[] = {"English", "Spanish", "French", "Back"};
+  const char* mainOptions[] = {"Start Game", "Tutorial", "Languages", "Iniciar juego", "Tutorial","Idiomas"};
+  const char* tutorialOptions[] = {"Back to Menu", "Volver al menu"};
+  const char* langOptions[] = {"English", "Espanol", "Back","English", "Espanol", "Volver"};
+  const char* languagePage[] = {"Select Lang", "Seleccionar idioma"};
+  const char* tutorialPage[] = {"Tutorial", "Tutorial"};
+  const char* TitlePage[] = {"Cave of Secrets", "Cueva de los secretos"};
   
   int menuState = 0; // 0 = Main Menu, 1 = Tutorial, 2 = Languages
   bool readyToPlay = false;
-
+  int language = 0;
   // --- THE MENU SYSTEM ---
   while(!readyToPlay) {
       
       if (menuState == 0) {
           // Run the Main Menu!
-          int choice = RunMenuScreen("Cave of Secrets", mainOptions, 3);
+          int choice = RunMenuScreen(TitlePage[mylanguagenum], mainOptions, 3);
           
           if (choice == 0) readyToPlay = true;  // Break the loop, start game!
           if (choice == 1) menuState = 1;       // Go to Tutorial screen
@@ -270,7 +278,7 @@ int main(void) {
       
       else if (menuState == 1) {
           // Run the Tutorial Menu!
-          int choice = RunMenuScreen("Tutorial", tutorialOptions, 1);
+          int choice = RunMenuScreen(tutorialPage[mylanguagenum], tutorialOptions, 1);
           
           // Even though there is only 1 option (Back), we still check it
           if (choice == 0) menuState = 0;       // Go back to Main Menu
@@ -278,11 +286,17 @@ int main(void) {
       
       else if (menuState == 2) {
           // Run the Languages Menu!
-          int choice = RunMenuScreen("Select Lang", langOptions, 4);
+          int choice = RunMenuScreen(languagePage[mylanguagenum], langOptions, 3);
           
-          if (choice == 0) myLanguage = English;
-          if (choice == 1) myLanguage = Spanish;
-          if (choice == 2) myLanguage = French;
+          if (choice == 0) {
+            myLanguage = English;
+            mylanguagenum = 0;
+          }
+          if (choice == 1) {
+            myLanguage = Spanish;
+            mylanguagenum = 1;
+          }
+          
           
           // No matter what language they picked (or if they hit Back), go to Main Menu
           menuState = 0; 
