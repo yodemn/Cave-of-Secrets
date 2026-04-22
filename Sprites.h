@@ -1,10 +1,7 @@
-//create sprite images and attributes 
-
-#include <stdint.h>
+#ifndef SPRITES_H
+#define SPRITES_H
 #include "img.h"
-#ifndef Sprites_H
-#define Sprites_H
-
+#include <stdint.h>
 #define PLAYER_SPRITE_WIDTH 16
 #define PLAYER_SPRITE_HEIGHT 20
 #define PLAYER_IDLE_FRAME_COUNT 4
@@ -18,35 +15,47 @@
 extern const ImageData PlayerIdleFrames[PLAYER_IDLE_FRAME_COUNT];
 extern const ImageData PlayerWalkFrames[PLAYER_WALK_FRAME_COUNT];
 
-class AnimatedPlayer{
-    public:
-        int x;
-        int y;
-        bool walking;
-        bool facingLeft;
-        uint8_t frame;
-        uint8_t tick;
-        int velocityY;
-        int gravity;
-        bool isGrounded;
-        bool wasJumpHeldLastFrame;
-        AnimatedPlayer(int startX, int startY);
-        void SetWalking(bool isWalking);
-        void Jump(bool buttonHeld);
-        void UpdatePhysics();
-        void LandOn(int groundY);
-        void StartFalling();
-        void SetFacingLeft(bool left);
-        void Move(int dx);
-        void Update();
-        void Draw();
-        ImageData CurrentImage();
-};
 
-//image of platform 
-const uint16_t platform[] = {
-    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFF
-};
+class AnimatedPlayer {
+public:
+    int x;
+    int y;
+    bool walking;
+    bool facingLeft;
+    uint8_t frame;
+    uint8_t tick;
 
+    // --- Physics & Jump Variables ---
+    int velocityY;
+    int gravity;
+    bool isGrounded;
+    bool wasJumpHeldLastFrame;
+    int jumpTimer;
+    
+    // Set your max jump time limit right here!
+    static const int MAX_JUMP_TIME = 15; 
+    
+    // --- Combo Variables ---
+    int comboState;
+    int comboTimer;
+    bool wasJoySelectHeldLastFrame;
+
+    // --- Functions ---
+    AnimatedPlayer(int startX, int startY);
+
+    void UpdatePhysics();
+    void LandOn(int groundY);
+    void StartFalling();
+    
+    // Notice how this matches the new CPP fix!
+    void Jump(bool jumpButtonHeld, bool joySelectHeld); 
+    
+    void SetWalking(bool isWalking);
+    void SetFacingLeft(bool left);
+    void Move(int dx);
+    void Update();
+    ImageData CurrentImage();
+    void Draw();
+};
 
 #endif

@@ -20,6 +20,7 @@
 #define SPIKE_SPRITE_HEIGHT TILE_SPRITE_HEIGHT
 #define SPIKE_FRAME_COUNT 4
 
+extern const uint16_t SpikeSprite[256];
 extern const uint16_t LargeTreeSprite[LARGE_TREE_WIDTH * LARGE_TREE_HEIGHT];
 extern ImageData LargeTreeImage;
 extern const uint16_t SmallTreeSprite[SMALL_TREE_WIDTH * SMALL_TREE_HEIGHT];

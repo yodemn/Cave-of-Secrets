@@ -2,7 +2,7 @@
 #define LEVEL_H
 
 #include <stdint.h>
-
+extern const uint8_t level_1_map[8][10];
 struct Rect {
   int16_t x0;
   int16_t y0;
@@ -19,8 +19,12 @@ struct LevelPlatform {
 enum LevelObjectType {
   LEVEL_OBJECT_SMALL_TREE,
   LEVEL_OBJECT_LARGE_TREE,
-  LEVEL_OBJECT_CHEST
-};
+  LEVEL_OBJECT_CHEST,
+  LEVEL_OBJECT_SPIKE_UP,    // Pointing Up (on the floor)
+    LEVEL_OBJECT_SPIKE_DOWN,  // Pointing Down (on the ceiling)
+    LEVEL_OBJECT_SPIKE_LEFT,  // Pointing Left (on a right wall)
+    LEVEL_OBJECT_SPIKE_RIGHT  // Pointing Right (on a left wall)
+  };
 
 struct LevelObject {
   LevelObjectType type;
@@ -37,7 +41,7 @@ struct LevelDefinition {
 
 extern const uint8_t LevelCount;
 extern const LevelDefinition Levels[];
-
+bool IsPlayerTouchingSpike(uint8_t levelIndex, Rect playerArea);
 void DrawLevel(uint8_t levelIndex);
 void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea);
 void ResetLevelObjectStates(uint8_t levelIndex);

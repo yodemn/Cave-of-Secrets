@@ -13,6 +13,17 @@ struct LevelObjectState {
   bool chestAnimating;
 };
 
+// The actual map data lives here in the .cpp file
+const uint8_t level_1_map[8][10] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 3, 0, 0},
+    {1, 1, 0, 0, 0, 1, 1, 1, 1, 1},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 1, 1, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 2, 2, 2, 0, 0},
+    {3, 0, 0, 0, 0, 1, 1, 1, 0, 3},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1} 
+};
 static const LevelPlatform Level0Platforms[] = {
   {6, 118, 7},
   {54, 96, 6},
@@ -28,7 +39,16 @@ static const LevelObject Level0Objects[] = {
   {LEVEL_OBJECT_CHEST, 50, 107},
   {LEVEL_OBJECT_CHEST, 80, 85},
   {LEVEL_OBJECT_CHEST, 30, 63},
-  {LEVEL_OBJECT_CHEST, 108, 57}
+  {LEVEL_OBJECT_CHEST, 108, 57},
+  {LEVEL_OBJECT_SPIKE_UP, 40, 127}, 
+  {LEVEL_OBJECT_SPIKE_UP, 56, 127},
+  
+  // Ceiling Spike (Y = 40 is up in the air)
+  {LEVEL_OBJECT_SPIKE_DOWN, 80, 40}, 
+  
+  // Wall Spike
+  {LEVEL_OBJECT_SPIKE_LEFT, 100, 60}
+  
 };
 
 static LevelObjectState Level0ObjectStates[sizeof(Level0Objects) / sizeof(Level0Objects[0])];
@@ -106,6 +126,14 @@ static ImageData ObjectImage(const LevelObject &object, const LevelObjectState *
   if(object.type == LEVEL_OBJECT_LARGE_TREE){
     return LargeTreeImage;
   }
+  
+  // --- THE 4 NEW SPIKES ---
+  if(object.type == LEVEL_OBJECT_SPIKE_UP)    return SpikeUpImage; 
+  if(object.type == LEVEL_OBJECT_SPIKE_DOWN)  return SpikeDownImage; 
+  if(object.type == LEVEL_OBJECT_SPIKE_LEFT)  return SpikeLeftImage; 
+  if(object.type == LEVEL_OBJECT_SPIKE_RIGHT) return SpikeRightImage; 
+  // ------------------------
+
   if(object.type == LEVEL_OBJECT_CHEST){
     uint8_t frame = state ? state->chestFrame : 0;
     if(frame >= CHEST_OPEN_FRAME_COUNT){
@@ -176,7 +204,31 @@ bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect curre
   }
   return foundLanding;
 }
+bool IsPlayerTouchingSpike(uint8_t levelIndex, Rect playerArea) {
+  if(levelIndex >= LevelCount) return false;
 
+  const LevelDefinition &level = Levels[levelIndex];
+  for(uint8_t i = 0; i < level.objectCount; i++){
+    const LevelObject &object = level.objects[i];
+    
+    // Check if the object is ANY of the 4 spike types
+    if(object.type == LEVEL_OBJECT_SPIKE_UP || 
+       object.type == LEVEL_OBJECT_SPIKE_DOWN || 
+       object.type == LEVEL_OBJECT_SPIKE_LEFT || 
+       object.type == LEVEL_OBJECT_SPIKE_RIGHT) {
+       
+      Rect spikeArea = GetObjectArea(object, 0);
+      
+      // Make the spike hitbox a little smaller so it feels fair
+      spikeArea = ExpandArea(spikeArea, -2, -2); 
+      
+      if(AreasOverlap(playerArea, spikeArea)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea){
   if(levelIndex >= LevelCount){
     return false;
@@ -301,9 +353,13 @@ void DrawLevel(uint8_t levelIndex){
 
   const LevelDefinition &level = Levels[levelIndex];
   LevelObjectState *states = ObjectStates(levelIndex);
+  
+  // This automatically draws trees, chests, AND your new spikes!
   for(uint8_t i = 0; i < level.objectCount; i++){
     DrawObject(level.objects[i], states ? &states[i] : 0);
   }
+  
+  // This draws the platforms
   for(uint8_t i = 0; i < level.platformCount; i++){
     DrawPlatformRun(level.platforms[i].x, level.platforms[i].y, level.platforms[i].tiles);
   }
