@@ -41,9 +41,12 @@ uint32_t Random(uint32_t n){
 }
  
 SlidePot Sensor(1674,173); 
-static const int16_t PlayerStartX = 24;
-static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
-AnimatedPlayer player(PlayerStartX, PlayerStartY);
+// static const int16_t PlayerStartX = 24;
+// static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
+static int16_t x = 0;
+static int16_t y = 1;
+static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 24, 20-TILE_SPRITE_HEIGHT};
+AnimatedPlayer player(PlayerStart[x], PlayerStart[y]);
 Background back1(0, 127, 0, background0_img);
 static uint8_t CurrentLevelIndex = 0;
 static const uint32_t ChestGoalCount = 6;
@@ -391,8 +394,8 @@ int main(void) {
     if(IsPlayerTouchingSpike(CurrentLevelIndex, currentPlayerArea)) {
         // 1. Reset player to the original spawn point
         LED_Off((7<<15));
-        player.x = PlayerStartX;
-        player.y = PlayerStartY;
+        player.x = PlayerStart[CurrentLevelIndex*2];
+        player.y = PlayerStart[(CurrentLevelIndex*2)+1];
         player.velocityY = 0;
         player.comboState = 0;
         
@@ -451,17 +454,28 @@ int main(void) {
     }
     
     RedrawChangedArea(redrawArea);
-    player.Draw();
+    // --- THE HUD FIX ---
+    // 2. Check if the screen update just wiped out the top-left corner!
+    // (The HUD is roughly 25 pixels wide and 16 pixels tall)
+    if(redrawArea.x0 <= 30 && redrawArea.y0 <= 20) {
+        starCounterDirty = true;
+    }
+
+    // 3. Draw the HUD *before* the player! 
+    // This allows the player to seamlessly run in front of the score.
     if(starCounterDirty){
       DrawStarCounter(starCount);
       starCounterDirty = false;
     }
+
+    // 4. Draw the player last so they are on top of everything!
+    player.Draw();
     if(chestCount <= 0){
       LED_Off(1<<16);
       if(CurrentLevelIndex + 1 < LevelCount){
         CurrentLevelIndex++;
-        player.x = PlayerStartX;
-        player.y = PlayerStartY;
+        player.x = PlayerStart[CurrentLevelIndex*2];
+        player.y = PlayerStart[(CurrentLevelIndex*2)+1];
         player.velocityY = 0;
         player.comboState = 0;
         player.SetWalking(false);
