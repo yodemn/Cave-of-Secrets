@@ -179,11 +179,7 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
     bool joystickReset = true; 
     int flashcur = 30;
 
-<<<<<<< Updated upstream
-    mainMenu(title, options, numOptions);
-=======
     mainMenu(title, options, numOptions, mylanguagenum);
->>>>>>> Stashed changes
 
     // CRITICAL: Wait for the player to let go of the button first!
     // Otherwise, clicking a button on Menu 1 will instantly click Menu 2!

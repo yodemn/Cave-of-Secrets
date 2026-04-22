@@ -41,18 +41,67 @@ static const LevelObject Level0Objects[] = {
   {LEVEL_OBJECT_CHEST, 80, 85},
   {LEVEL_OBJECT_CHEST, 30, 63},
   {LEVEL_OBJECT_CHEST, 108, 57},
-  {LEVEL_OBJECT_SPIKE_UP, 40, 127}, 
-  {LEVEL_OBJECT_SPIKE_UP, 56, 127},
-  
-  // Ceiling Spike (Y = 40 is up in the air)
-  {LEVEL_OBJECT_SPIKE_DOWN, 80, 40}, 
-  
-  // Wall Spike
-  {LEVEL_OBJECT_SPIKE_LEFT, 100, 60}
-  
+  {LEVEL_OBJECT_CHEST, 76, 37},
+  {LEVEL_OBJECT_CHEST, 86, 18},
+  {LEVEL_OBJECT_SPIKE_UP, 12, 107},
+  {LEVEL_OBJECT_SPIKE_UP, 14, 63},
+  {LEVEL_OBJECT_SPIKE_UP, 38, 37},
+  {LEVEL_OBJECT_SPIKE_UP, 47, 37},
+  {LEVEL_OBJECT_SPIKE_UP, 99, 85},
+  {LEVEL_OBJECT_SPIKE_UP, 130, 57},
+  {LEVEL_OBJECT_SPIKE_UP, 114, 18}
 };
 
-void mainMenu(const char* title, const char* options[], int numOptions){
+static const LevelPlatform Level1Platforms[] = {
+  {0, 130, 5},
+  {86, 130, 8},
+  {0, 80, 5},
+  {14, 55, 4},
+  {1, 30, 5},
+  {20, 105, 6},
+  {75, 105, 6},
+  {90, 80, 7},
+  {75, 55, 7},
+  {90, 30, 7}
+};
+
+static const LevelPlatformColumn Level1Columns[] = {
+  {65, 85, 9}
+};
+
+static const LevelObject Level1Objects[] = {
+  {LEVEL_OBJECT_CHEST, 35, 43},
+  {LEVEL_OBJECT_CHEST, 0, 68},
+  {LEVEL_OBJECT_CHEST, 35, 118},
+  {LEVEL_OBJECT_CHEST, 115, 118},
+  {LEVEL_OBJECT_CHEST, 108, 68},
+  {LEVEL_OBJECT_CHEST, 85, 18},
+  {LEVEL_OBJECT_SPIKE_UP, 4, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 15, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 48, 127},
+  {LEVEL_OBJECT_SPIKE_UP, 58, 127},
+  {LEVEL_OBJECT_SPIKE_UP, 68, 127},
+  {LEVEL_OBJECT_SPIKE_UP, 93, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 104, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 139, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 22, 77},
+  {LEVEL_OBJECT_SPIKE_UP, 31, 77},
+  // {LEVEL_OBJECT_SPIKE_UP, 28, 59},
+  // {LEVEL_OBJECT_SPIKE_UP, 92, 91},
+  // {LEVEL_OBJECT_SPIKE_UP, 114, 73},
+  // {LEVEL_OBJECT_SPIKE_UP, 123, 73},
+  // {LEVEL_OBJECT_SPIKE_UP, 124, 57},
+  // {LEVEL_OBJECT_SPIKE_UP, 134, 57},
+  // {LEVEL_OBJECT_SPIKE_UP, 107, 40},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 132, 113},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 144, 95},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 122, 79},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 111, 62},
+  // {LEVEL_OBJECT_SPIKE_LEFT, 54, 73},
+  // {LEVEL_OBJECT_SPIKE_RIGHT, 74, 58}
+};
+
+void mainMenu(const char* title, const char* options[], int numOptions, int language){
   ST7735_SetTextColor(ST7735_WHITE);
   ST7735_FillScreen(ST7735_BLACK);
     
