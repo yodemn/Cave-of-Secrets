@@ -202,6 +202,7 @@ int main(void) {
   Switch_Init();   // Initialize your switches
   LED_Init();      // Initialize your LEDs
 
+
   ST7735_InitPrintf(INITR_BLACKTAB); 
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
