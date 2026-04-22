@@ -52,6 +52,55 @@ static const LevelObject Level0Objects[] = {
   {LEVEL_OBJECT_SPIKE_UP, 114, 18}
 };
 
+static const LevelPlatform Level1Platforms[] = {
+  {0, 122, 5},
+  {86, 122, 8},
+  {15, 104, 4},
+  {0, 88, 5},
+  {16, 70, 5},
+  {84, 102, 5},
+  {98, 84, 6},
+  {82, 68, 8},
+  {84, 51, 7},
+  {86, 34, 7}
+};
+
+static const LevelPlatformColumn Level1Columns[] = {
+  {63, 103, 9}
+};
+
+static const LevelObject Level1Objects[] = {
+  {LEVEL_OBJECT_CHEST, 34, 111},
+  {LEVEL_OBJECT_CHEST, 8, 93},
+  {LEVEL_OBJECT_CHEST, 34, 59},
+  {LEVEL_OBJECT_CHEST, 123, 111},
+  {LEVEL_OBJECT_CHEST, 104, 57},
+  {LEVEL_OBJECT_CHEST, 96, 23},
+  {LEVEL_OBJECT_SPIKE_UP, 4, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 15, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 48, 127},
+  {LEVEL_OBJECT_SPIKE_UP, 58, 127},
+  {LEVEL_OBJECT_SPIKE_UP, 68, 127},
+  {LEVEL_OBJECT_SPIKE_UP, 93, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 104, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 139, 111},
+  {LEVEL_OBJECT_SPIKE_UP, 22, 77},
+  {LEVEL_OBJECT_SPIKE_UP, 31, 77},
+  {LEVEL_OBJECT_SPIKE_UP, 28, 59},
+  {LEVEL_OBJECT_SPIKE_UP, 92, 91},
+  {LEVEL_OBJECT_SPIKE_UP, 114, 73},
+  {LEVEL_OBJECT_SPIKE_UP, 123, 73},
+  {LEVEL_OBJECT_SPIKE_UP, 124, 57},
+  {LEVEL_OBJECT_SPIKE_UP, 134, 57},
+  {LEVEL_OBJECT_SPIKE_UP, 107, 40},
+  {LEVEL_OBJECT_SPIKE_DOWN, 132, 113},
+  {LEVEL_OBJECT_SPIKE_DOWN, 144, 95},
+  {LEVEL_OBJECT_SPIKE_DOWN, 122, 79},
+  {LEVEL_OBJECT_SPIKE_DOWN, 111, 62},
+  {LEVEL_OBJECT_SPIKE_LEFT, 54, 73},
+  {LEVEL_OBJECT_SPIKE_RIGHT, 74, 58}
+};
+
 void mainMenu(const char* title, const char* options[], int numOptions, int language){
   (void)language;
   ST7735_SetTextColor(ST7735_WHITE);
@@ -79,13 +128,24 @@ void DrawCursor(int oldSelection, int newSelection){
 }
 
 static LevelObjectState Level0ObjectStates[sizeof(Level0Objects) / sizeof(Level0Objects[0])];
+static LevelObjectState Level1ObjectStates[sizeof(Level1Objects) / sizeof(Level1Objects[0])];
 
 const LevelDefinition Levels[] = {
   {
     Level0Platforms,
     sizeof(Level0Platforms) / sizeof(Level0Platforms[0]),
+    0,
+    0,
     Level0Objects,
     sizeof(Level0Objects) / sizeof(Level0Objects[0])
+  },
+  {
+    Level1Platforms,
+    sizeof(Level1Platforms) / sizeof(Level1Platforms[0]),
+    Level1Columns,
+    sizeof(Level1Columns) / sizeof(Level1Columns[0]),
+    Level1Objects,
+    sizeof(Level1Objects) / sizeof(Level1Objects[0])
   }
 };
 
@@ -130,8 +190,21 @@ static Rect GetPlatformArea(const LevelPlatform &platform){
   return r;
 }
 
+static Rect GetPlatformColumnArea(const LevelPlatformColumn &column){
+  Rect r;
+  r.x0 = column.x;
+  r.y0 = column.y - column.tiles * PLATFORM_COLUMN_TILE_HEIGHT + 1;
+  r.x1 = column.x + PLATFORM_COLUMN_TILE_WIDTH - 1;
+  r.y1 = column.y;
+  return r;
+}
+
 static int16_t GetPlatformLandingY(const LevelPlatform &platform){
   return platform.y - TILE_SPRITE_HEIGHT;
+}
+
+static int16_t GetPlatformColumnLandingY(const LevelPlatformColumn &column){
+  return column.y - column.tiles * PLATFORM_COLUMN_TILE_HEIGHT;
 }
 
 static bool PlayerFeetOverlapPlatform(Rect playerArea, const LevelPlatform &platform){
@@ -142,9 +215,20 @@ static bool PlayerFeetOverlapPlatform(Rect playerArea, const LevelPlatform &plat
   return (playerFootX0 <= platformX1) && (playerFootX1 >= platformX0);
 }
 
+static bool PlayerFeetOverlapPlatformColumn(Rect playerArea, const LevelPlatformColumn &column){
+  int16_t columnX0 = column.x;
+  int16_t columnX1 = column.x + PLATFORM_COLUMN_TILE_WIDTH - 1;
+  int16_t playerFootX0 = playerArea.x0 + 2;
+  int16_t playerFootX1 = playerArea.x1 - 2;
+  return (playerFootX0 <= columnX1) && (playerFootX1 >= columnX0);
+}
+
 static LevelObjectState *ObjectStates(uint8_t levelIndex){
   if(levelIndex == 0){
     return Level0ObjectStates;
+  }
+  if(levelIndex == 1){
+    return Level1ObjectStates;
   }
   return 0;
 }
@@ -226,10 +310,56 @@ bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect curre
     }
   }
 
+  for(uint8_t i = 0; i < level.columnCount; i++){
+    const LevelPlatformColumn &column = level.columns[i];
+    int16_t columnLandingY = GetPlatformColumnLandingY(column);
+    bool crossedColumnTop = (previousPlayerArea.y1 <= columnLandingY) && (currentPlayerArea.y1 >= columnLandingY);
+
+    if(crossedColumnTop && PlayerFeetOverlapPlatformColumn(currentPlayerArea, column)){
+      if(!foundLanding || columnLandingY < bestLandingY){
+        bestLandingY = columnLandingY;
+        foundLanding = true;
+      }
+    }
+  }
+
   if(foundLanding && landingY){
     *landingY = bestLandingY;
   }
   return foundLanding;
+}
+
+bool FindPlatformColumnSideCollision(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *blockedX){
+  if(levelIndex >= LevelCount){
+    return false;
+  }
+
+  const LevelDefinition &level = Levels[levelIndex];
+  int16_t playerWidth = currentPlayerArea.x1 - currentPlayerArea.x0 + 1;
+  for(uint8_t i = 0; i < level.columnCount; i++){
+    Rect columnArea = GetPlatformColumnArea(level.columns[i]);
+    bool verticalOverlap = (currentPlayerArea.y0 <= columnArea.y1) && (currentPlayerArea.y1 >= columnArea.y0);
+    if(!verticalOverlap){
+      continue;
+    }
+
+    bool crossedLeftSide = (previousPlayerArea.x1 < columnArea.x0) && (currentPlayerArea.x1 >= columnArea.x0);
+    bool crossedRightSide = (previousPlayerArea.x0 > columnArea.x1) && (currentPlayerArea.x0 <= columnArea.x1);
+    if(crossedLeftSide){
+      if(blockedX){
+        *blockedX = columnArea.x0 - playerWidth;
+      }
+      return true;
+    }
+    if(crossedRightSide){
+      if(blockedX){
+        *blockedX = columnArea.x1 + 1;
+      }
+      return true;
+    }
+  }
+
+  return false;
 }
 bool IsPlayerTouchingSpike(uint8_t levelIndex, Rect playerArea) {
   if(levelIndex >= LevelCount) return false;
@@ -265,6 +395,12 @@ bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea){
   for(uint8_t i = 0; i < level.platformCount; i++){
     const LevelPlatform &platform = level.platforms[i];
     if(playerArea.y1 == GetPlatformLandingY(platform) && PlayerFeetOverlapPlatform(playerArea, platform)){
+      return true;
+    }
+  }
+  for(uint8_t i = 0; i < level.columnCount; i++){
+    const LevelPlatformColumn &column = level.columns[i];
+    if(playerArea.y1 == GetPlatformColumnLandingY(column) && PlayerFeetOverlapPlatformColumn(playerArea, column)){
       return true;
     }
   }
@@ -390,6 +526,9 @@ void DrawLevel(uint8_t levelIndex){
   for(uint8_t i = 0; i < level.platformCount; i++){
     DrawPlatformRun(level.platforms[i].x, level.platforms[i].y, level.platforms[i].tiles);
   }
+  for(uint8_t i = 0; i < level.columnCount; i++){
+    DrawPlatformColumn(level.columns[i].x, level.columns[i].y, level.columns[i].tiles);
+  }
 }
 
 void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea){
@@ -408,6 +547,11 @@ void RedrawLevelPiecesInArea(uint8_t levelIndex, Rect outdatedArea){
   for(uint8_t i = 0; i < level.platformCount; i++){
     if(AreasOverlap(outdatedArea, GetPlatformArea(level.platforms[i]))){
       DrawPlatformRun(level.platforms[i].x, level.platforms[i].y, level.platforms[i].tiles);
+    }
+  }
+  for(uint8_t i = 0; i < level.columnCount; i++){
+    if(AreasOverlap(outdatedArea, GetPlatformColumnArea(level.columns[i]))){
+      DrawPlatformColumn(level.columns[i].x, level.columns[i].y, level.columns[i].tiles);
     }
   }
 }

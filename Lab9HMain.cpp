@@ -45,7 +45,7 @@ static const int16_t PlayerStartX = 24;
 static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
 AnimatedPlayer player(PlayerStartX, PlayerStartY);
 Background back1(0, 127, 0, background0_img);
-static const uint8_t CurrentLevelIndex = 0;
+static uint8_t CurrentLevelIndex = 0;
 static const uint32_t ChestGoalCount = 6;
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select);
 static Rect GetPlayerArea(int16_t x, int16_t y);
@@ -326,6 +326,7 @@ int main(void) {
   uint32_t chestCount = ChestGoalCount;
   uint32_t starCount = 0;
   bool starCounterDirty = false;
+  uint32_t chestLedTicks = 0;
 
   while(1){
     if(NewFrameReady == 0){
@@ -364,6 +365,12 @@ int main(void) {
     }
     else{
       player.SetWalking(false);
+    }
+
+    Rect movedPlayerArea = GetPlayerArea(player.x, player.y);
+    int16_t blockedX;
+    if(FindPlatformColumnSideCollision(CurrentLevelIndex, previousPlayerArea, movedPlayerArea, &blockedX)){
+      player.x = blockedX;
     }
 
     if(player.isGrounded && player.y < 127 && !IsPlayerSupportedByPlatform(CurrentLevelIndex, GetPlayerArea(player.x, player.y))){
@@ -418,7 +425,6 @@ int main(void) {
 
     bool interactButtonPressed = interactButtonHeld && !wasInteractButtonHeld;
     Rect chestArea;
-    uint32_t count;
     if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &chestArea)){
       Sound_Chest();
       redrawArea = CombineAreas(redrawArea, chestArea);
@@ -427,15 +433,15 @@ int main(void) {
       chestCount--;
       starCount++;
       starCounterDirty = true;
-      count = 15;
+      chestLedTicks = 15;
     }
 
-    if(chestLEDOn && count <= 0) {
-      count = 0;
+    if(chestLEDOn && chestLedTicks <= 0) {
+      chestLedTicks = 0;
       LED_Off(1<<16);
       chestLEDOn = false;
     } else if (chestLEDOn) {
-      count--;
+      chestLedTicks--;
     }
     wasInteractButtonHeld = interactButtonHeld;
     
@@ -452,6 +458,28 @@ int main(void) {
     }
     if(chestCount <= 0){
       LED_Off(1<<16);
+      if(CurrentLevelIndex + 1 < LevelCount){
+        CurrentLevelIndex++;
+        player.x = PlayerStartX;
+        player.y = PlayerStartY;
+        player.velocityY = 0;
+        player.comboState = 0;
+        player.SetWalking(false);
+
+        chestCount = ChestGoalCount;
+        starCount = 0;
+        starCounterDirty = false;
+        chestLEDOn = false;
+        chestLedTicks = 0;
+
+        ST7735_FillScreen(ST7735_BLACK);
+        ResetLevelObjectStates(CurrentLevelIndex);
+        back1.Draw();
+        DrawLevel(CurrentLevelIndex);
+        player.Draw();
+        DrawStarCounter(starCount);
+        continue;
+      }
       ST7735_FillScreen(ST7735_WHITE);
       while(1){
         

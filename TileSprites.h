@@ -9,6 +9,8 @@
 #define TILE_SOURCE_WIDTH 16
 #define TILE_SOURCE_HEIGHT 16
 #define TILE_CHROMA_KEY 0x07E0
+#define PLATFORM_COLUMN_TILE_WIDTH TILE_SPRITE_HEIGHT
+#define PLATFORM_COLUMN_TILE_HEIGHT TILE_SPRITE_WIDTH
 #define LARGE_TREE_WIDTH 56
 #define LARGE_TREE_HEIGHT 82
 #define SMALL_TREE_WIDTH 36
@@ -60,6 +62,8 @@ extern ImageData TileImage_09_04;
 
 void DrawBitmapChroma(int16_t x, int16_t y, const uint16_t *image, int16_t w, int16_t h, uint16_t chroma);
 void DrawImageChroma(int16_t x, int16_t y, ImageData image, uint16_t chroma = TILE_CHROMA_KEY);
+void DrawImageChromaRotated90(int16_t x, int16_t y, ImageData image, uint16_t chroma = TILE_CHROMA_KEY);
 void DrawPlatformRun(int16_t x, int16_t y, uint8_t tiles);
+void DrawPlatformColumn(int16_t x, int16_t y, uint8_t tiles);
 
 #endif

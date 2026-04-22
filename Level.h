@@ -16,6 +16,12 @@ struct LevelPlatform {
   uint8_t tiles;
 };
 
+struct LevelPlatformColumn {
+  int16_t x;
+  int16_t y;
+  uint8_t tiles;
+};
+
 enum LevelObjectType {
   LEVEL_OBJECT_SMALL_TREE,
   LEVEL_OBJECT_LARGE_TREE,
@@ -35,6 +41,8 @@ struct LevelObject {
 struct LevelDefinition {
   const LevelPlatform *platforms;
   uint8_t platformCount;
+  const LevelPlatformColumn *columns;
+  uint8_t columnCount;
   const LevelObject *objects;
   uint8_t objectCount;
 };
@@ -48,6 +56,7 @@ void ResetLevelObjectStates(uint8_t levelIndex);
 bool TryOpenNearbyChest(uint8_t levelIndex, Rect playerArea, Rect *dirtyArea);
 bool UpdateLevelAnimations(uint8_t levelIndex, Rect *dirtyArea);
 bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *landingY);
+bool FindPlatformColumnSideCollision(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *blockedX);
 bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea);
 void mainMenu(const char* title, const char* options[], int numOptions, int language);
 void DrawCursor(int oldSelection, int newSelection);

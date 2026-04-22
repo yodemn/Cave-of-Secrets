@@ -650,6 +650,23 @@ void DrawImageChroma(int16_t x, int16_t y, ImageData image, uint16_t chroma){
     DrawBitmapChroma(x, y, image.pixels, image.width, image.height, chroma);
 }
 
+void DrawImageChromaRotated90(int16_t x, int16_t y, ImageData image, uint16_t chroma){
+    int16_t rotatedWidth = image.height;
+    int16_t rotatedHeight = image.width;
+
+    for(int16_t row = 0; row < rotatedHeight; row++){
+        int16_t screenY = y - rotatedHeight + 1 + row;
+        for(int16_t col = 0; col < rotatedWidth; col++){
+            int16_t sourceCol = row;
+            int16_t sourceRow = col;
+            uint16_t color = image.pixels[sourceRow * image.width + sourceCol];
+            if(color != chroma){
+                ST7735_DrawPixel(x + col, screenY, color);
+            }
+        }
+    }
+}
+
 void DrawPlatformRun(int16_t x, int16_t y, uint8_t tiles){
     if(tiles == 0){
         return;
@@ -664,4 +681,20 @@ void DrawPlatformRun(int16_t x, int16_t y, uint8_t tiles){
         DrawImageChroma(x + i * TILE_SPRITE_WIDTH, y, PlatformMiddleImage(i));
     }
     DrawImageChroma(x + (tiles - 1) * TILE_SPRITE_WIDTH, y, PlatformRightEndImage);
+}
+
+void DrawPlatformColumn(int16_t x, int16_t y, uint8_t tiles){
+    if(tiles == 0){
+        return;
+    }
+    if(tiles == 1) {
+        DrawImageChromaRotated90(x, y, PlatformMiddleAImage);
+        return;
+    }
+
+    DrawImageChromaRotated90(x, y, PlatformRightEndImage);
+    for(uint8_t i = 1; i < (tiles - 1); i++){
+        DrawImageChromaRotated90(x, y - i * PLATFORM_COLUMN_TILE_HEIGHT, PlatformMiddleImage(i));
+    }
+    DrawImageChromaRotated90(x, y - (tiles - 1) * PLATFORM_COLUMN_TILE_HEIGHT, PlatformLeftEndImage);
 }
