@@ -20,11 +20,11 @@ enum LevelObjectType {
   LEVEL_OBJECT_SMALL_TREE,
   LEVEL_OBJECT_LARGE_TREE,
   LEVEL_OBJECT_CHEST,
-  LEVEL_OBJECT_SPIKE_UP,    // Pointing Up (on the floor)
-    LEVEL_OBJECT_SPIKE_DOWN,  // Pointing Down (on the ceiling)
-    LEVEL_OBJECT_SPIKE_LEFT,  // Pointing Left (on a right wall)
-    LEVEL_OBJECT_SPIKE_RIGHT  // Pointing Right (on a left wall)
-  };
+  LEVEL_OBJECT_SPIKE_UP,
+  LEVEL_OBJECT_SPIKE_DOWN,
+  LEVEL_OBJECT_SPIKE_LEFT,
+  LEVEL_OBJECT_SPIKE_RIGHT
+};
 
 struct LevelObject {
   LevelObjectType type;
