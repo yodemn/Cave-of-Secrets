@@ -49,5 +49,6 @@ bool TryOpenNearbyChest(uint8_t levelIndex, Rect playerArea, Rect *dirtyArea);
 bool UpdateLevelAnimations(uint8_t levelIndex, Rect *dirtyArea);
 bool FindPlatformLanding(uint8_t levelIndex, Rect previousPlayerArea, Rect currentPlayerArea, int16_t *landingY);
 bool IsPlayerSupportedByPlatform(uint8_t levelIndex, Rect playerArea);
-
+void mainMenu(const char* title, const char* options[], int numOptions, int language);
+void DrawCursor(int oldSelection, int newSelection);
 #endif

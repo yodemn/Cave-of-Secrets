@@ -24,6 +24,7 @@ const uint8_t level_1_map[8][10] = {
     {3, 0, 0, 0, 0, 1, 1, 1, 0, 3},
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1} 
 };
+
 static const LevelPlatform Level0Platforms[] = {
   {6, 118, 7},
   {54, 96, 6},
@@ -50,6 +51,30 @@ static const LevelObject Level0Objects[] = {
   {LEVEL_OBJECT_SPIKE_LEFT, 100, 60}
   
 };
+
+void mainMenu(const char* title, const char* options[], int numOptions){
+  ST7735_SetTextColor(ST7735_WHITE);
+  ST7735_FillScreen(ST7735_BLACK);
+    
+    // Draw Title
+    ST7735_SetCursor(3, 2); 
+    ST7735_OutString((char*)title);
+
+    // Draw the options dynamically!
+    for(int i = 0; i < numOptions; i++) {
+        ST7735_SetCursor(7, 5 + (i * 2)); 
+        ST7735_OutString((char*)options[i]);
+    } 
+}
+
+void DrawCursor(int oldSelection, int newSelection){
+  ST7735_SetCursor(5,5+(oldSelection*2));
+  ST7735_OutChar(' ');
+
+  ST7735_SetCursor(5,5+(newSelection*2));
+  ST7735_OutChar('>');
+
+}
 
 static LevelObjectState Level0ObjectStates[sizeof(Level0Objects) / sizeof(Level0Objects[0])];
 

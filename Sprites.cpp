@@ -95,8 +95,9 @@ void AnimatedPlayer::Jump(bool jumpButtonHeld, bool joySelectHeld){
     }
 
     // --- 3. STEP 2: MID-AIR PAUSE ---
-    if(!isGrounded && comboState == 1 && joySelectHeld && !wasJoySelectHeldLastFrame){
-        comboState = 2;  
+    if(!isGrounded && comboState < 2 && joySelectHeld && !wasJoySelectHeldLastFrame){
+        comboState = 2; 
+        comboTimer = 0; 
         velocityY = 0;   
         gravity = 0;     // Hover!
     }
@@ -107,7 +108,7 @@ void AnimatedPlayer::Jump(bool jumpButtonHeld, bool joySelectHeld){
         gravity = 1;     
         
         // Give them the exact same medium burst of speed for the double jump
-        velocityY = PLAYER_JUMP_VELOCITY-2;  
+        velocityY = PLAYER_JUMP_VELOCITY+1;  
     }
 
     // Save states so they can't just hold the button down!

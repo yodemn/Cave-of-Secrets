@@ -55,6 +55,7 @@ volatile uint32_t CurrentJumpSelect = 0;
 volatile uint32_t CurrentJoystickDirection = 0;
 volatile uint8_t CurrentJumpButtonHeld = 0;
 volatile uint8_t NewFrameReady = 0;
+volatile uint32_t MenuButton = 0;
 bool chestLEDOn = false;
 
 // game engine runs at 30Hz
@@ -70,6 +71,7 @@ void TIMG12_IRQHandler(void){
     uint32_t portA_input = GPIOA->DIN31_0;
     CurrentJumpButtonHeld = ((portA_input & (1<<27)) != 0);
     CurrentJumpSelect = ((portA_input & (1<<24)) != 0);
+    MenuButton = ((portA_input & (1<<25)) != 0);
     NewFrameReady = 1;
   }
 }
@@ -98,40 +100,6 @@ const char *Phrases[3][4]={
   {Goodbye_English,Goodbye_Spanish,Goodbye_Portuguese,Goodbye_French},
   {Language_English,Language_Spanish,Language_Portuguese,Language_French}
 };
-
-int main1(void){ 
-    char l;
-  __disable_irq();
-  PLL_Init(); 
-  LaunchPad_Init();
-  ST7735_InitPrintf(INITR_REDTAB); 
-  ST7735_FillScreen(0x0000);            
-  for(int myPhrase=0; myPhrase<= 2; myPhrase++){
-    for(int myL=0; myL<= 3; myL++){
-         ST7735_OutString((char *)Phrases[LANGUAGE][myL]);
-      ST7735_OutChar(' ');
-         ST7735_OutString((char *)Phrases[myPhrase][myL]);
-      ST7735_OutChar(13);
-    }
-  }
-  Clock_Delay1ms(3000);
-  ST7735_FillScreen(0x0000);       
-  l = 128;
-  while(1){
-    Clock_Delay1ms(2000);
-    for(int j=0; j < 3; j++){
-      for(int i=0;i<16;i++){
-        ST7735_SetCursor(7*j+0,i);
-        ST7735_OutUDec(l);
-        ST7735_OutChar(' ');
-        ST7735_OutChar(' ');
-        ST7735_SetCursor(7*j+4,i);
-        ST7735_OutChar(l);
-        l++;
-      }
-    }
-  }
-}
 
 static Rect GetPlayerArea(int16_t x, int16_t y){
   Rect r;
@@ -203,6 +171,64 @@ bool IsPlayerTouchingSpike(Rect playerArea) {
     }
     return false;
 }
+
+
+int RunMenuScreen(const char* title, const char* options[], int numOptions) {
+    int selectedItem = 0; 
+    bool joystickReset = true; 
+    int flashcur = 30;
+
+    mainMenu(title, options, numOptions);
+
+    // CRITICAL: Wait for the player to let go of the button first!
+    // Otherwise, clicking a button on Menu 1 will instantly click Menu 2!
+    while(MenuButton != 0) { } 
+
+    // The Universal Loop
+    while(MenuButton == 0){
+        if(NewFrameReady){
+            NewFrameReady = 0;
+            uint32_t rawX = CurrentJoystickX; 
+            int menuDir = 0;
+            
+            if(rawX < 1500) { menuDir = 4; } // Down
+            if(rawX > 2600) { menuDir = 3; } // Up
+
+            if(menuDir == 0) { joystickReset = true; }
+
+            if(joystickReset) {
+                if(menuDir == 4 && selectedItem < (numOptions - 1)) { // Down
+                    ST7735_SetCursor(5, 5 + (selectedItem * 2)); 
+                    ST7735_OutChar(' '); 
+                    selectedItem++;
+                    flashcur = 30; joystickReset = false; 
+                } 
+                else if(menuDir == 3 && selectedItem > 0) { // Up
+                    ST7735_SetCursor(5, 5 + (selectedItem * 2)); 
+                    ST7735_OutChar(' '); 
+                    selectedItem--;
+                    flashcur = 30; joystickReset = false; 
+                }
+            }
+
+            // Blinking Cursor
+            flashcur--;
+            if (flashcur <= 0) flashcur = 30;
+
+            if (flashcur > 15) {
+                ST7735_SetCursor(5, 5 + (selectedItem * 2)); ST7735_OutChar('>'); 
+            } else {
+                ST7735_SetCursor(5, 5 + (selectedItem * 2)); ST7735_OutChar(' '); 
+            }
+        }
+    }
+    
+    // Wait for them to let go of the button before returning
+    while(MenuButton != 0) { } 
+
+    return selectedItem; // Returns 0, 1, 2, etc. depending on what they picked!
+}
+
 // active game main
 int main(void) {
   __disable_irq();
@@ -217,13 +243,63 @@ int main(void) {
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
 
+  
+
+  TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick
+  __enable_irq();
+  
+// --- DEFINE YOUR MENUS ---
+  const char* mainOptions[] = {"Start Game", "Tutorial", "Languages"};
+  const char* tutorialOptions[] = {"Back to Menu"};
+  const char* langOptions[] = {"English", "Spanish", "French", "Back"};
+  
+  int menuState = 0; // 0 = Main Menu, 1 = Tutorial, 2 = Languages
+  bool readyToPlay = false;
+
+  // --- THE MENU SYSTEM ---
+  while(!readyToPlay) {
+      
+      if (menuState == 0) {
+          // Run the Main Menu!
+          int choice = RunMenuScreen("Cave of Secrets", mainOptions, 3);
+          
+          if (choice == 0) readyToPlay = true;  // Break the loop, start game!
+          if (choice == 1) menuState = 1;       // Go to Tutorial screen
+          if (choice == 2) menuState = 2;       // Go to Languages screen
+      }
+      
+      else if (menuState == 1) {
+          // Run the Tutorial Menu!
+          int choice = RunMenuScreen("Tutorial", tutorialOptions, 1);
+          
+          // Even though there is only 1 option (Back), we still check it
+          if (choice == 0) menuState = 0;       // Go back to Main Menu
+      }
+      
+      else if (menuState == 2) {
+          // Run the Languages Menu!
+          int choice = RunMenuScreen("Select Lang", langOptions, 4);
+          
+          if (choice == 0) myLanguage = English;
+          if (choice == 1) myLanguage = Spanish;
+          if (choice == 2) myLanguage = French;
+          
+          // No matter what language they picked (or if they hit Back), go to Main Menu
+          menuState = 0; 
+      }
+  }
+
+  // --- MENU FINISHED ---
+  ST7735_FillScreen(ST7735_BLACK);
+  
+  // Start the game...
+  ResetLevelObjectStates(CurrentLevelIndex);
+  // ...
+  ST7735_FillScreen(ST7735_BLACK);
   ResetLevelObjectStates(CurrentLevelIndex);
   back1.Draw();
   DrawLevel(CurrentLevelIndex);
   player.Draw();
-
-  TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick
-  __enable_irq();
 
   bool wasInteractButtonHeld = false;
     uint32_t chestCount=4;
@@ -284,6 +360,7 @@ int main(void) {
     }
     if(IsPlayerTouchingSpike(CurrentLevelIndex, currentPlayerArea)) {
         // 1. Reset player to the original spawn point
+        LED_Off((7<<15));
         player.x = PlayerStartX;
         player.y = PlayerStartY;
         player.velocityY = 0;
@@ -295,10 +372,14 @@ int main(void) {
 
         // 2. Quickly clear the screen and redraw the whole level 
         // (This prevents the player's old sprite from getting stuck on the screen)
+        LED_On((1<<15));
         ST7735_FillScreen(ST7735_BLACK);
+        Clock_Delay1ms(1000);
+        LED_Off((1<<15));
         back1.Draw();
         DrawLevel(CurrentLevelIndex);
         player.Draw();
+
         
 
         // 3. Skip the rest of the math for this frame and start fresh!
