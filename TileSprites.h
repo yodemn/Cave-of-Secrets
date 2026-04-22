@@ -19,6 +19,8 @@
 #define SPIKE_SPRITE_WIDTH TILE_SPRITE_WIDTH
 #define SPIKE_SPRITE_HEIGHT TILE_SPRITE_HEIGHT
 #define SPIKE_FRAME_COUNT 4
+#define STAR_SPRITE_WIDTH 12
+#define STAR_SPRITE_HEIGHT 12
 
 extern const uint16_t SpikeSprite[256];
 extern const uint16_t LargeTreeSprite[LARGE_TREE_WIDTH * LARGE_TREE_HEIGHT];
@@ -26,6 +28,8 @@ extern ImageData LargeTreeImage;
 extern const uint16_t SmallTreeSprite[SMALL_TREE_WIDTH * SMALL_TREE_HEIGHT];
 extern ImageData SmallTreeImage;
 extern ImageData ChestOpenFrames[CHEST_OPEN_FRAME_COUNT];
+extern const uint16_t StarCounterSprite[STAR_SPRITE_WIDTH * STAR_SPRITE_HEIGHT];
+extern ImageData StarCounterImage;
 extern const uint16_t SpikeUpSprite[SPIKE_SPRITE_WIDTH * SPIKE_SPRITE_HEIGHT];
 extern const uint16_t SpikeRightSprite[SPIKE_SPRITE_WIDTH * SPIKE_SPRITE_HEIGHT];
 extern const uint16_t SpikeDownSprite[SPIKE_SPRITE_WIDTH * SPIKE_SPRITE_HEIGHT];

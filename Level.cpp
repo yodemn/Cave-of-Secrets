@@ -40,15 +40,15 @@ static const LevelObject Level0Objects[] = {
   {LEVEL_OBJECT_CHEST, 80, 85},
   {LEVEL_OBJECT_CHEST, 30, 63},
   {LEVEL_OBJECT_CHEST, 108, 57},
-  {LEVEL_OBJECT_SPIKE_UP, 40, 127}, 
-  {LEVEL_OBJECT_SPIKE_UP, 56, 127},
-  
-  // Ceiling Spike (Y = 40 is up in the air)
-  {LEVEL_OBJECT_SPIKE_DOWN, 80, 40}, 
-  
-  // Wall Spike
-  {LEVEL_OBJECT_SPIKE_LEFT, 100, 60}
-  
+  {LEVEL_OBJECT_CHEST, 76, 37},
+  {LEVEL_OBJECT_CHEST, 86, 18},
+  {LEVEL_OBJECT_SPIKE_UP, 12, 107},
+  {LEVEL_OBJECT_SPIKE_UP, 14, 63},
+  {LEVEL_OBJECT_SPIKE_UP, 38, 37},
+  {LEVEL_OBJECT_SPIKE_UP, 47, 37},
+  {LEVEL_OBJECT_SPIKE_UP, 99, 85},
+  {LEVEL_OBJECT_SPIKE_UP, 130, 57},
+  {LEVEL_OBJECT_SPIKE_UP, 114, 18}
 };
 
 static LevelObjectState Level0ObjectStates[sizeof(Level0Objects) / sizeof(Level0Objects[0])];

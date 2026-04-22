@@ -46,6 +46,7 @@ static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
 AnimatedPlayer player(PlayerStartX, PlayerStartY);
 Background back1(0, 127, 0, background0_img);
 static const uint8_t CurrentLevelIndex = 0;
+static const uint32_t ChestGoalCount = 6;
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select);
 static Rect GetPlayerArea(int16_t x, int16_t y);
 
@@ -169,6 +170,16 @@ static void RedrawChangedArea(Rect area){
   RedrawLevelPiecesInArea(CurrentLevelIndex, area);
 }
 
+static void DrawStarCounter(uint32_t stars){
+  Rect hudArea = {0, 0, 24, 15};
+  if(stars > 9){
+    stars = 9;
+  }
+  RestoreBackgroundArea(hudArea);
+  DrawImageChroma(1, 13, StarCounterImage);
+  ST7735_DrawCharS(13, 4, '0' + stars, ST7735_YELLOW, ST7735_YELLOW, 1);
+}
+
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   if(select){
     return 5; // button
@@ -182,13 +193,11 @@ static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   return 0; // center
 }
 bool IsPlayerTouchingSpike(Rect playerArea) {
-    // Convert the player's pixel coordinates into tile grid coordinates (divide by 16)
     int leftTile = playerArea.x0 / 16;
     int rightTile = playerArea.x1 / 16;
     int topTile = playerArea.y0 / 16;
     int bottomTile = playerArea.y1 / 16;
 
-    // Check all tiles the player is currently overlapping
     for(int row = topTile; row <= bottomTile; row++) {
         for(int col = leftTile; col <= rightTile; col++) {
             // Check bounds so the game doesn't crash if they go off screen
@@ -211,6 +220,7 @@ int main(void) {
   PCBJoystick_Init();
   Switch_Init();   
   LED_Init();      
+  Sound_Init();
 
 
   ST7735_InitPrintf(INITR_BLACKTAB); 
@@ -221,12 +231,15 @@ int main(void) {
   back1.Draw();
   DrawLevel(CurrentLevelIndex);
   player.Draw();
+  DrawStarCounter(0);
 
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick
   __enable_irq();
 
   bool wasInteractButtonHeld = false;
-    uint32_t chestCount=4;
+  uint32_t chestCount = ChestGoalCount;
+  uint32_t starCount = 0;
+  bool starCounterDirty = false;
 
   while(1){
     if(NewFrameReady == 0){
@@ -289,7 +302,9 @@ int main(void) {
         player.velocityY = 0;
         player.comboState = 0;
         
-        chestCount = 4;
+        chestCount = ChestGoalCount;
+        starCount = 0;
+        starCounterDirty = false;
 
         ResetLevelObjectStates(CurrentLevelIndex);
 
@@ -299,6 +314,7 @@ int main(void) {
         back1.Draw();
         DrawLevel(CurrentLevelIndex);
         player.Draw();
+        DrawStarCounter(starCount);
         
 
         // 3. Skip the rest of the math for this frame and start fresh!
@@ -313,10 +329,13 @@ int main(void) {
     Rect chestArea;
     uint32_t count;
     if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &chestArea)){
+      Sound_Chest();
       redrawArea = CombineAreas(redrawArea, chestArea);
       chestLEDOn = true;
       LED_On(1<<16);
       chestCount--;
+      starCount++;
+      starCounterDirty = true;
       count = 15;
     }
 
@@ -336,6 +355,10 @@ int main(void) {
     
     RedrawChangedArea(redrawArea);
     player.Draw();
+    if(starCounterDirty){
+      DrawStarCounter(starCount);
+      starCounterDirty = false;
+    }
     if(chestCount <= 0){
       LED_Off(1<<16);
       ST7735_FillScreen(ST7735_WHITE);
