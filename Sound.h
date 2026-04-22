@@ -29,6 +29,7 @@ void Sound_Start(const uint8_t *pt, uint32_t count);
 // they configure pointers/counters and initiate the sound by calling Sound_Start
 void Sound_Shoot(void);
 void Sound_Chest(void);
+void Sound_Death(void);
 void Sound_Killed(void);
 void Sound_Explosion(void);
 void Sound_Fastinvader1(void);

@@ -388,6 +388,7 @@ int main(void) {
         // 2. Quickly clear the screen and redraw the whole level 
         // (This prevents the player's old sprite from getting stuck on the screen)
         LED_On((1<<15));
+        Sound_Death();
         ST7735_FillScreen(ST7735_BLACK);
         Clock_Delay1ms(1000);
         LED_Off((1<<15));

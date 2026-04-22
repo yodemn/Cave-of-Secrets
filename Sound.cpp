@@ -95,6 +95,10 @@ void Sound_Chest(void) {
   Sound_Start(chest, chestLength);
 }
 
+void Sound_Death(void) {
+  Sound_Start(death, deathLength);
+}
+
 void Sound_Killed(void){
 // write this
 
