@@ -43,10 +43,8 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1674,173); 
 // static const int16_t PlayerStartX = 24;
 // static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
-static int16_t x = 0;
-static int16_t y = 1;
-static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 24, 20-TILE_SPRITE_HEIGHT};
-AnimatedPlayer player(PlayerStart[x], PlayerStart[y]);
+static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 20, 118-TILE_SPRITE_HEIGHT, 10, 50};
+AnimatedPlayer player(PlayerStart[0], PlayerStart[1]);
 Background back1(0, 127, 0, background0_img);
 static uint8_t CurrentLevelIndex = 0;
 static const uint32_t ChestGoalCount = 6;
@@ -499,95 +497,5 @@ int main(void) {
         
       }
     }
-  }
-}
-
-// use main2 to observe graphics
-int main2(void){ 
-  __disable_irq();
-  PLL_Init(); 
-  LaunchPad_Init();
-  PCBJoystick_Init();
-  Switch_Init();   
-  LED_Init();      
-  ST7735_InitPrintf(INITR_BLACKTAB); 
-  ST7735_SetRotation(1);
-  ST7735_FillScreen(ST7735_BLACK);
-  LED_On(1<<15);
-  LED_On(1<<16);
-  LED_On(1<<17);
-  back1.Draw();
-  DrawLevel(CurrentLevelIndex);
-  while(1){
-  }
-}
-
-int mainA(void){ 
-  __disable_irq();
-  PLL_Init();      
-  LaunchPad_Init(); 
-  Switch_Init();   
-  LED_Init();      
-  __enable_irq();
-  LED_On(1<<15);
-  LED_On(1<<16);
-  LED_On(1<<17);
-  while(1){
-  }
-}
-
-// use main3 to test switches and LEDs
-int main3(void){ 
-  __disable_irq();
-  PLL_Init(); 
-  LaunchPad_Init();
-  Switch_Init(); 
-  LED_Init(); 
-  while(1){
-      uint32_t input = Switch_In();
-      if(input & 0x01){ LED_On(1<<15); } else { LED_Off(1<<15); }
-      if(input & 0x02){ LED_On(1<<16); } else { LED_Off(1<<16); }
-      if(input & 0x04){ LED_On(1<<17); } else { LED_Off(1<<17); }
-      if(input & 0x08){
-          LED_Toggle((1<<15) | (1<<16) | (1<<17));
-          for(volatile int i=0; i<100000; i++){}; 
-      }
-  }
-}
-
-// use main4 to test sound outputs
-int main4(void){ 
-  uint32_t last=0,now;
-  __disable_irq();
-  PLL_Init(); 
-  LaunchPad_Init();
-  Switch_Init(); 
-  LED_Init(); 
-  Sound_Init();  
-  TExaS_Init(ADC0,6,0); 
-  __enable_irq();
-  while(1){
-    now = Switch_In(); 
-    if((last == 0)&&(now == 1)){ Sound_Shoot(); }
-    if((last == 0)&&(now == 2)){ Sound_Killed(); }
-    if((last == 0)&&(now == 4)){ Sound_Explosion(); }
-    if((last == 0)&&(now == 8)){ Sound_Fastinvader1(); }
-  }
-}
-
-// ALL ST7735 OUTPUT MUST OCCUR IN MAIN
-int main5(void){ 
-  __disable_irq();
-  PLL_Init(); 
-  LaunchPad_Init();
-  ST7735_InitPrintf(INITR_REDTAB); 
-  ST7735_FillScreen(ST7735_BLACK);
-  Sensor.Init(); 
-  Switch_Init(); 
-  LED_Init();    
-  Sound_Init();  
-  TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); 
-  __enable_irq();
-  while(1){
   }
 }
