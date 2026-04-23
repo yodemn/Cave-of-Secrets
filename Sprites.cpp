@@ -41,21 +41,20 @@ void AnimatedPlayer::UpdatePhysics(){
     }
     y += velocityY;
     
-    // Ceiling check
+
     if(y < 16){ 
         y = 16;          
         velocityY = 0;   
     }
 
-    // Floor check
+
     if(y >= 127){ 
         y = 127;           
         velocityY = 0;     
         isGrounded = true; 
         
-        // --- NEW: Reset Combo on Landing ---
         comboState = 0;
-        gravity = 1; // Failsafe to ensure gravity is on
+        gravity = 1; 
     }
 }
 
@@ -73,45 +72,38 @@ void AnimatedPlayer::StartFalling(){
 }
 
 void AnimatedPlayer::Jump(bool jumpButtonHeld, bool joySelectHeld){
-    // --- 1. THE COMBO TIMER ---
     if(comboState > 0){
         comboTimer++;
-        // If 1 second (30 frames) passes, combo fails
+
         if(comboTimer > 30){
             comboState = 0; 
             gravity = 1;     
         }
     }
 
-    // --- 2. STEP 1: INITIAL JUMP ---
     if(isGrounded && jumpButtonHeld && !wasJumpHeldLastFrame){
         isGrounded = false;
         
-        // Apply one single burst of upward speed
         velocityY = PLAYER_JUMP_VELOCITY+1;  
         
         comboState = 1;
         comboTimer = 0;
     }
 
-    // --- 3. STEP 2: MID-AIR PAUSE ---
     if(!isGrounded && comboState < 2 && joySelectHeld && !wasJoySelectHeldLastFrame){
         comboState = 2; 
         comboTimer = 0; 
         velocityY = 0;   
-        gravity = 0;     // Hover!
+        gravity = 0;    
     }
 
-    // --- 4. STEP 3: DOUBLE JUMP ---
     if(!isGrounded && comboState == 2 && jumpButtonHeld && !wasJumpHeldLastFrame){
         comboState = 3;  
         gravity = 1;     
         
-        // Give them the exact same medium burst of speed for the double jump
         velocityY = PLAYER_JUMP_VELOCITY+2;  
     }
 
-    // Save states so they can't just hold the button down!
     wasJumpHeldLastFrame = jumpButtonHeld;
     wasJoySelectHeldLastFrame = joySelectHeld;
 }
