@@ -42,9 +42,8 @@ uint32_t Random(uint32_t n){
 }
  
 SlidePot Sensor(1674,173); 
-// static const int16_t PlayerStartX = 24;
-// static const int16_t PlayerStartY = 118 - TILE_SPRITE_HEIGHT;
-static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 20, 118-TILE_SPRITE_HEIGHT, 10, 50};
+
+static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 24, 118-TILE_SPRITE_HEIGHT, 10, 50};
 AnimatedPlayer player(PlayerStart[0], PlayerStart[1]);
 Background back1(0, 127, 0, background0_img);
 static uint8_t CurrentLevelIndex = 0;
@@ -172,27 +171,6 @@ static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
   }
   return 0; // center
 }
-bool IsPlayerTouchingSpike(Rect playerArea) {
-    int leftTile = playerArea.x0 / 16;
-    int rightTile = playerArea.x1 / 16;
-    int topTile = playerArea.y0 / 16;
-    int bottomTile = playerArea.y1 / 16;
-
-    for(int row = topTile; row <= bottomTile; row++) {
-        for(int col = leftTile; col <= rightTile; col++) {
-            // Check bounds so the game doesn't crash if they go off screen
-            if (row >= 0 && row < 8 && col >= 0 && col < 10) {
-                // Assuming your level array is accessible here. 
-                // Adjust 'level_1_map' to whatever your partner named the level array!
-                if(level_1_map[row][col] == 2) { 
-                    return true; // Hit a spike!
-                }
-            }
-        }
-    }
-    return false;
-}
-
 
 int RunMenuScreen(const char* title, const char* options[], int numOptions) {
     int selectedItem = 0; 
@@ -202,7 +180,6 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
     mainMenu(title, options, numOptions, mylanguagenum);
 
     // CRITICAL: Wait for the player to let go of the button first!
-    // Otherwise, clicking a button on Menu 1 will instantly click Menu 2!
     while(MenuButton != 0) { } 
 
     // The Universal Loop
@@ -241,7 +218,7 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
             } else {
                 ST7735_SetCursor(5, 5 + (selectedItem * 2)); ST7735_OutChar(' '); 
             }      
-  }
+        }
     }
     
     // Wait for them to let go of the button before returning
@@ -260,253 +237,242 @@ int main(void) {
   LED_Init();      
   Sound_Init();
 
-
   ST7735_InitPrintf(INITR_BLACKTAB); 
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
-
-  
 
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick
   __enable_irq();
   Sound_Start(ClashSound, sizeof(ClashSound));
   
-// --- DEFINE YOUR MENUS ---
+  // --- DEFINE YOUR MENUS ---
   const char* mainOptions[] = {"Start Game", "Tutorial", "Languages", "Iniciar juego", "Tutorial","Idiomas"};
-  const char* tutorialOptions[] = {"Back to Menu", "Volver al menu"};
+  const char* tutorialOptions[] = {"Back to Menu","Down = Jump", "Left = ENTER", "Right = Interact","Volver al menu","Abajo = Saltar", "Izq = Entrar", "Der = Accion"};
   const char* langOptions[] = {"English", "Espanol", "Back","English", "Espanol", "Volver"};
   const char* languagePage[] = {"Select Lang", "Seleccionar idioma"};
   const char* tutorialPage[] = {"Tutorial", "Tutorial"};
   const char* TitlePage[] = {"Cave of Secrets", "Cueva de los secretos"};
   
-  int menuState = 0; // 0 = Main Menu, 1 = Tutorial, 2 = Languages
-  bool readyToPlay = false;
-  int language = 0;
-  // --- THE MENU SYSTEM ---
-  while(!readyToPlay) {
-      
-      if (menuState == 0) {
-          // Run the Main Menu!
-          int choice = RunMenuScreen(TitlePage[mylanguagenum], mainOptions, 3);
-
-          if (choice == 0) readyToPlay = true;  // Break the loop, start game!
-          if (choice == 1) menuState = 1;       // Go to Tutorial screen
-          if (choice == 2) menuState = 2;       // Go to Languages screen
-      }
-      
-      else if (menuState == 1) {
-          // Run the Tutorial Menu!
-          int choice = RunMenuScreen(tutorialPage[mylanguagenum], tutorialOptions, 1);
-          
-          // Even though there is only 1 option (Back), we still check it
-          if (choice == 0) menuState = 0;       // Go back to Main Menu
-      }
-      
-      else if (menuState == 2) {
-          // Run the Languages Menu!
-          int choice = RunMenuScreen(languagePage[mylanguagenum], langOptions, 3);
-
-          if (choice == 0) {
-            myLanguage = English;
-            mylanguagenum = 0;
-          }
-          if (choice == 1) {
-            myLanguage = Spanish;
-            mylanguagenum = 1;
-          }
-          
-          
-          // No matter what language they picked (or if they hit Back), go to Main Menu
-          menuState = 0; 
-      }
-  }
-
-  // --- MENU FINISHED ---
-  ST7735_FillScreen(ST7735_BLACK);
-  
-  // Start the game...
-  ResetLevelObjectStates(CurrentLevelIndex);
-  // ...
-  ST7735_FillScreen(ST7735_BLACK);
-  ResetLevelObjectStates(CurrentLevelIndex);
-  back1.Draw();
-  DrawLevel(CurrentLevelIndex);
-  player.Draw();
-  DrawStarCounter(0);
-
-  bool wasInteractButtonHeld = false;
-  uint32_t chestCount = ChestGoalCount;
-  uint32_t starCount = 0;
-  bool starCounterDirty = false;
-  uint32_t chestLedTicks = 0;
-
+  // --- MASTER GAME LOOP ---
   while(1){
-    if(NewFrameReady == 0){
-      continue;
+    int menuState = 0;
+    bool readyToPlay = false;
+  
+    // --- THE MENU SYSTEM ---
+    while(!readyToPlay) {
+        if (menuState == 0) {
+            int choice = RunMenuScreen(TitlePage[mylanguagenum], mainOptions, 3);
+            if (choice == 0) readyToPlay = true; 
+            if (choice == 1) menuState = 1;       
+            if (choice == 2) menuState = 2;       
+        }
+        else if (menuState == 1) {
+            int choice = RunMenuScreen(tutorialPage[mylanguagenum], tutorialOptions, 4);
+            if (choice == 0) menuState = 0;       
+        }
+        else if (menuState == 2) {
+            int choice = RunMenuScreen(languagePage[mylanguagenum], langOptions, 3);
+            if (choice == 0) {
+              myLanguage = English;
+              mylanguagenum = 0;
+            }
+            if (choice == 1) {
+              myLanguage = Spanish;
+              mylanguagenum = 1;
+            }
+            menuState = 0; 
+        }
     }
+
+    // --- MENU FINISHED - START GAME SETUP ---
+    ST7735_FillScreen(ST7735_BLACK);
     
-    __disable_irq();
-    uint32_t direction = CurrentJoystickDirection;
-    
-    // --- Grab buttons safely from the IRQ variables ---
-    bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
-    bool joySelectHeld = (CurrentJumpSelect != 0); 
-    
-    bool interactButtonHeld;
-    if((GPIOA->DIN31_0 & (1<<26)) != 0) {
-      interactButtonHeld = true;
-    }  else {
-      interactButtonHeld = false;
-    }
-    NewFrameReady = 0;
-    __enable_irq();
+    // Set the player's spawn based on CurrentLevelIndex
+    player.x = PlayerStart[CurrentLevelIndex*2];
+    player.y = PlayerStart[(CurrentLevelIndex*2)+1];
 
-    Rect previousPlayerArea = GetPlayerArea(player.x, player.y);
-    if(player.comboState != 2){
-      if(direction == 1){
-        player.SetFacingLeft(true);
-        player.Move(PLAYER_RUN_SPEED);
-        player.SetWalking(true);
-      } else if(direction == 2){
-        player.SetFacingLeft(false);
-        player.Move(-PLAYER_RUN_SPEED);
-        player.SetWalking(true);
-      } else {
-        player.SetWalking(false);
-      }
-    }
-    else{
-      player.SetWalking(false);
-    }
-
-    Rect movedPlayerArea = GetPlayerArea(player.x, player.y);
-    int16_t blockedX;
-    if(FindPlatformColumnSideCollision(CurrentLevelIndex, previousPlayerArea, movedPlayerArea, &blockedX)){
-      player.x = blockedX;
-    }
-
-    if(player.isGrounded && player.y < 127 && !IsPlayerSupportedByPlatform(CurrentLevelIndex, GetPlayerArea(player.x, player.y))){
-      player.StartFalling();
-    }
-
-    // --- Trigger the combo jump! ---
-    player.Jump(jumpButtonHeld, joySelectHeld);
-    
-    player.UpdatePhysics();
-    
-    int16_t platformLandingY;
-    Rect currentPlayerArea = GetPlayerArea(player.x, player.y);
-    if(FindPlatformLanding(CurrentLevelIndex, previousPlayerArea, currentPlayerArea, &platformLandingY)){
-      player.LandOn(platformLandingY);
-      currentPlayerArea = GetPlayerArea(player.x, player.y);
-    }
-    if(IsPlayerTouchingSpike(CurrentLevelIndex, currentPlayerArea)) {
-        // 1. Reset player to the original spawn point
-        LED_Off((7<<15));
-        player.x = PlayerStart[CurrentLevelIndex*2];
-        player.y = PlayerStart[(CurrentLevelIndex*2)+1];
-        player.velocityY = 0;
-        player.comboState = 0;
-        
-        chestCount = ChestGoalCount;
-        starCount = 0;
-        starCounterDirty = false;
-
-        ResetLevelObjectStates(CurrentLevelIndex);
-
-        // 2. Quickly clear the screen and redraw the whole level 
-        // (This prevents the player's old sprite from getting stuck on the screen)
-        LED_On((1<<15));
-        Sound_Death();
-        ST7735_FillScreen(ST7735_BLACK);
-        Clock_Delay1ms(1000);
-        LED_Off((1<<15));
-        back1.Draw();
-        DrawLevel(CurrentLevelIndex);
-        player.Draw();
-        DrawStarCounter(starCount);
-        
-
-        // 3. Skip the rest of the math for this frame and start fresh!
-        continue; 
-    }
-    player.Update();
-
-    
-    Rect redrawArea = CombineAreas(previousPlayerArea, currentPlayerArea);
-
-    bool interactButtonPressed = interactButtonHeld && !wasInteractButtonHeld;
-    Rect chestArea;
-    if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &chestArea)){
-      Sound_Chest();
-      redrawArea = CombineAreas(redrawArea, chestArea);
-      chestLEDOn = true;
-      LED_On(1<<16);
-      chestCount--;
-      starCount++;
-      starCounterDirty = true;
-      chestLedTicks = 15;
-    }
-
-    if(chestLEDOn && chestLedTicks <= 0) {
-      chestLedTicks = 0;
-      LED_Off(1<<16);
-      chestLEDOn = false;
-    } else if (chestLEDOn) {
-      chestLedTicks--;
-    }
-    wasInteractButtonHeld = interactButtonHeld;
-    
-    Rect animatedChestArea;
-    if(UpdateLevelAnimations(CurrentLevelIndex, &animatedChestArea)){
-      redrawArea = CombineAreas(redrawArea, animatedChestArea);
-    }
-    
-    RedrawChangedArea(redrawArea);
-    // --- THE HUD FIX ---
-    // 2. Check if the screen update just wiped out the top-left corner!
-    // (The HUD is roughly 25 pixels wide and 16 pixels tall)
-    if(redrawArea.x0 <= 30 && redrawArea.y0 <= 20) {
-        starCounterDirty = true;
-    }
-
-    // 3. Draw the HUD *before* the player! 
-    // This allows the player to seamlessly run in front of the score.
-    if(starCounterDirty){
-      DrawStarCounter(starCount);
-      starCounterDirty = false;
-    }
-
-    // 4. Draw the player last so they are on top of everything!
+    ResetLevelObjectStates(CurrentLevelIndex);
+    back1.Draw();
+    DrawLevel(CurrentLevelIndex);
     player.Draw();
-    if(chestCount <= 0){
-      LED_Off(1<<16);
-      chestLEDOn = false;
-      chestLedTicks = 0;
-      FlashLevelCompleteLED();
-      if(CurrentLevelIndex + 1 < LevelCount){
-        CurrentLevelIndex++;
-        player.x = PlayerStart[CurrentLevelIndex*2];
-        player.y = PlayerStart[(CurrentLevelIndex*2)+1];
-        player.velocityY = 0;
-        player.comboState = 0;
-        player.SetWalking(false);
+    DrawStarCounter(0);
 
-        chestCount = ChestGoalCount;
-        starCount = 0;
-        starCounterDirty = false;
+    bool wasInteractButtonHeld = false;
+    uint32_t chestCount = ChestGoalCount;
+    uint32_t starCount = 0;
+    bool starCounterDirty = false;
+    uint32_t chestLedTicks = 0;
 
-        ST7735_FillScreen(ST7735_BLACK);
-        ResetLevelObjectStates(CurrentLevelIndex);
-        back1.Draw();
-        DrawLevel(CurrentLevelIndex);
-        player.Draw();
-        DrawStarCounter(starCount);
+    // --- ACTIVE GAME LOOP ---
+    while(1){
+      if(NewFrameReady == 0){
         continue;
       }
-      ST7735_FillScreen(ST7735_WHITE);
-      while(1){
+      
+      __disable_irq();
+      uint32_t direction = CurrentJoystickDirection;
+      
+      // Grab buttons safely from the IRQ variables
+      bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
+      bool joySelectHeld = (CurrentJumpSelect != 0); 
+      
+      bool interactButtonHeld;
+      if((GPIOA->DIN31_0 & (1<<26)) != 0) {
+        interactButtonHeld = true;
+      }  else {
+        interactButtonHeld = false;
+      }
+      NewFrameReady = 0;
+      __enable_irq();
+
+      // --- MENU RETURN LOGIC ---
+      if (joySelectHeld) {
+          // Wait for the player to physically let go of the joystick button!
+          while(CurrentJumpSelect != 0) {} 
+          // Break out of the active game loop to go back to the menu!
+          break; 
+      }
+
+      Rect previousPlayerArea = GetPlayerArea(player.x, player.y);
+      if(player.comboState != 2){
+        if(direction == 1){
+          player.SetFacingLeft(true);
+          player.Move(PLAYER_RUN_SPEED);
+          player.SetWalking(true);
+        } else if(direction == 2){
+          player.SetFacingLeft(false);
+          player.Move(-PLAYER_RUN_SPEED);
+          player.SetWalking(true);
+        } else {
+          player.SetWalking(false);
+        }
+      }
+      else{
+        player.SetWalking(false);
+      }
+
+      Rect movedPlayerArea = GetPlayerArea(player.x, player.y);
+      int16_t blockedX;
+      if(FindPlatformColumnSideCollision(CurrentLevelIndex, previousPlayerArea, movedPlayerArea, &blockedX)){
+        player.x = blockedX;
+      }
+
+      if(player.isGrounded && player.y < 127 && !IsPlayerSupportedByPlatform(CurrentLevelIndex, GetPlayerArea(player.x, player.y))){
+        player.StartFalling();
+      }
+
+      // Trigger jump
+      player.Jump(jumpButtonHeld, joySelectHeld);
+      player.UpdatePhysics();
+      
+      int16_t platformLandingY;
+      Rect currentPlayerArea = GetPlayerArea(player.x, player.y);
+      if(FindPlatformLanding(CurrentLevelIndex, previousPlayerArea, currentPlayerArea, &platformLandingY)){
+        player.LandOn(platformLandingY);
+        currentPlayerArea = GetPlayerArea(player.x, player.y);
+      }
+
+      if(IsPlayerTouchingSpike(CurrentLevelIndex, currentPlayerArea)) {
+          LED_Off((7<<15));
+          player.x = PlayerStart[CurrentLevelIndex*2];
+          player.y = PlayerStart[(CurrentLevelIndex*2)+1];
+          player.velocityY = 0;
+          player.comboState = 0;
+          
+          chestCount = ChestGoalCount;
+          starCount = 0;
+          starCounterDirty = false;
+
+          ResetLevelObjectStates(CurrentLevelIndex);
+
+          LED_On((1<<15));
+          Sound_Death();
+          ST7735_FillScreen(ST7735_BLACK);
+          Clock_Delay1ms(1000);
+          LED_Off((1<<15));
+          back1.Draw();
+          DrawLevel(CurrentLevelIndex);
+          player.Draw();
+          DrawStarCounter(starCount);
+          continue; 
+      }
+      player.Update();
+
+      Rect redrawArea = CombineAreas(previousPlayerArea, currentPlayerArea);
+
+      bool interactButtonPressed = interactButtonHeld && !wasInteractButtonHeld;
+      Rect chestArea;
+      if(interactButtonPressed && TryOpenNearbyChest(CurrentLevelIndex, currentPlayerArea, &chestArea)){
+        Sound_Chest();
+        redrawArea = CombineAreas(redrawArea, chestArea);
+        chestLEDOn = true;
+        LED_On(1<<16);
+        chestCount--;
+        starCount++;
+        starCounterDirty = true;
+        chestLedTicks = 15;
+      }
+
+      if(chestLEDOn && chestLedTicks <= 0) {
+        chestLedTicks = 0;
+        LED_Off(1<<16);
+        chestLEDOn = false;
+      } else if (chestLEDOn) {
+        chestLedTicks--;
+      }
+      wasInteractButtonHeld = interactButtonHeld;
+      
+      Rect animatedChestArea;
+      if(UpdateLevelAnimations(CurrentLevelIndex, &animatedChestArea)){
+        redrawArea = CombineAreas(redrawArea, animatedChestArea);
+      }
+      
+      RedrawChangedArea(redrawArea);
+      
+      // HUD Z-Order Fix
+      if(redrawArea.x0 <= 30 && redrawArea.y0 <= 20) {
+          starCounterDirty = true;
+      }
+      if(starCounterDirty){
+        DrawStarCounter(starCount);
+        starCounterDirty = false;
+      }
+
+      player.Draw();
+
+      // Check Level Completion
+      if(chestCount <= 0){
+        LED_Off(1<<16);
+        chestLEDOn = false;
+        chestLedTicks = 0;
+        FlashLevelCompleteLED();
         
+        if(CurrentLevelIndex + 1 < LevelCount){
+          CurrentLevelIndex++;
+          player.x = PlayerStart[CurrentLevelIndex*2];
+          player.y = PlayerStart[(CurrentLevelIndex*2)+1];
+          player.velocityY = 0;
+          player.comboState = 0;
+          player.SetWalking(false);
+
+          chestCount = ChestGoalCount;
+          starCount = 0;
+          starCounterDirty = false;
+
+          ST7735_FillScreen(ST7735_BLACK);
+          ResetLevelObjectStates(CurrentLevelIndex);
+          back1.Draw();
+          DrawLevel(CurrentLevelIndex);
+          player.Draw();
+          DrawStarCounter(starCount);
+          continue;
+        }
+        
+        // Game Won Screen!
+        ST7735_FillScreen(ST7735_WHITE);
+        while(1){
+          // Stay here forever or add "You Win!" text
+        }
       }
     }
   }
