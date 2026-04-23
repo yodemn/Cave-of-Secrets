@@ -197,29 +197,27 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
 
     mainMenu(title, options, numOptions, mylanguagenum);
 
-    // CRITICAL: Wait for the player to let go of the button first!
     while(MenuButton != 0) { } 
 
-    // The Universal Loop
     while(MenuButton == 0){
         if(NewFrameReady){
             NewFrameReady = 0;
             uint32_t rawX = CurrentJoystickX; 
             int menuDir = 0;
             
-            if(rawX < 1500) { menuDir = 4; } // Down
-            if(rawX > 2600) { menuDir = 3; } // Up
+            if(rawX < 1500) { menuDir = 4; }
+            if(rawX > 2600) { menuDir = 3; }
 
             if(menuDir == 0) { joystickReset = true; }
 
             if(joystickReset) {
-                if(menuDir == 4 && selectedItem < (numOptions - 1)) { // Down
+                if(menuDir == 4 && selectedItem < (numOptions - 1)) {
                     ST7735_SetCursor(5, 5 + (selectedItem * 2)); 
                     ST7735_OutChar(' '); 
                     selectedItem++;
                     flashcur = 30; joystickReset = false; 
                 } 
-                else if(menuDir == 3 && selectedItem > 0) { // Up
+                else if(menuDir == 3 && selectedItem > 0) {
                     ST7735_SetCursor(5, 5 + (selectedItem * 2)); 
                     ST7735_OutChar(' '); 
                     selectedItem--;
@@ -227,7 +225,6 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
                 }
             }
 
-            // Blinking Cursor
             flashcur--;
             if (flashcur <= 0) flashcur = 30;
 
@@ -239,10 +236,9 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
         }
     }
     
-    // Wait for them to let go of the button before returning
     while(MenuButton != 0) { } 
 
-    return selectedItem; // Returns 0, 1, 2, etc. depending on what they picked!
+    return selectedItem;
 }
 
 // active game main
@@ -259,11 +255,11 @@ int main(void) {
   ST7735_SetRotation(1);
   ST7735_FillScreen(ST7735_BLACK);
 
-  TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick
+  TimerG12_IntArm(80000000 / 30, 2);
   __enable_irq();
   Sound_Start(ClashSound, sizeof(ClashSound));
   
-  // --- DEFINE YOUR MENUS ---
+
   const char* mainOptions[] = {"Start Game", "Tutorial", "Languages", "Iniciar juego", "Tutorial","Idiomas"};
   const char* tutorialOptions[] = {"Back to Menu","Down = Jump", "Left = ENTER", "Right = Interact","Volver al menu","Abajo = Saltar", "Izq = Entrar", "Der = Accion"};
   const char* langOptions[] = {"English", "Espanol", "Back","English", "Espanol", "Volver"};
@@ -271,12 +267,12 @@ int main(void) {
   const char* tutorialPage[] = {"Tutorial", "Tutorial"};
   const char* TitlePage[] = {"Cave of Secrets", "Cueva de los secretos"};
   
-  // --- MASTER GAME LOOP ---
+
   while(1){
     int menuState = 0;
     bool readyToPlay = false;
   
-    // --- THE MENU SYSTEM ---
+
     while(!readyToPlay) {
         if (menuState == 0) {
             int choice = RunMenuScreen(TitlePage[mylanguagenum], mainOptions, 3);
@@ -302,10 +298,10 @@ int main(void) {
         }
     }
 
-    // --- MENU FINISHED - START GAME SETUP ---
+
     ST7735_FillScreen(ST7735_BLACK);
     
-    // Set the player's spawn based on CurrentLevelIndex
+
     player.x = PlayerStart[CurrentLevelIndex*2];
     player.y = PlayerStart[(CurrentLevelIndex*2)+1];
 
@@ -321,7 +317,7 @@ int main(void) {
     bool starCounterDirty = false;
     uint32_t chestLedTicks = 0;
 
-    // --- ACTIVE GAME LOOP ---
+
     while(1){
       if(NewFrameReady == 0){
         continue;
@@ -330,7 +326,7 @@ int main(void) {
       __disable_irq();
       uint32_t direction = CurrentJoystickDirection;
       
-      // Grab buttons safely from the IRQ variables
+
       bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
       bool joySelectHeld = (CurrentJumpSelect != 0); 
       bool joystickSelectHeld = (CurrentJoystickSelectButton != 0);
@@ -344,7 +340,7 @@ int main(void) {
       NewFrameReady = 0;
       __enable_irq();
 
-      // --- MENU RETURN LOGIC ---
+
       if (joystickSelectHeld) {
           break; 
       }
@@ -377,7 +373,6 @@ int main(void) {
         player.StartFalling();
       }
 
-      // Trigger jump
       player.Jump(jumpButtonHeld, joySelectHeld);
       player.UpdatePhysics();
       
@@ -445,7 +440,7 @@ int main(void) {
       
       RedrawChangedArea(redrawArea);
       
-      // HUD Z-Order Fix
+
       if(redrawArea.x0 <= 30 && redrawArea.y0 <= 20) {
           starCounterDirty = true;
       }
@@ -456,7 +451,6 @@ int main(void) {
 
       player.Draw();
 
-      // Check Level Completion
       if(chestCount <= 0){
         LED_Off(1<<16);
         chestLEDOn = false;
@@ -485,10 +479,9 @@ int main(void) {
           continue;
         }
         
-        // Game Won Screen!
+
         DrawEndScreen();
         while(1){
-          // Stay here forever or add "You Win!" text
         }
       }
     }
