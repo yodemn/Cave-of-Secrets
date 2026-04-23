@@ -84,6 +84,55 @@ static const LevelObject Level1Objects[] = {
   {LEVEL_OBJECT_SPIKE_UP, 128, 33}
 };
 
+static const LevelPlatform Level2Platforms[] = {
+  {0, 130, 5},
+  {86, 130, 8},
+  {0, 80, 5},
+  {14, 55, 4},
+  {1, 30, 5},
+  {20, 105, 6},
+  {75, 105, 6},
+  {90, 80, 7},
+  {75, 55, 7},
+  {90, 30, 7}
+};
+
+static const LevelPlatformColumn Level2Columns[] = {
+  {65, 85, 9}
+};
+
+static const LevelObject Level2Objects[] = {
+  // {LEVEL_OBJECT_CHEST, 34, 111},
+  // {LEVEL_OBJECT_CHEST, 8, 93},
+  // {LEVEL_OBJECT_CHEST, 34, 59},
+  // {LEVEL_OBJECT_CHEST, 123, 111},
+  // {LEVEL_OBJECT_CHEST, 104, 57},
+  // {LEVEL_OBJECT_CHEST, 96, 23},
+  // {LEVEL_OBJECT_SPIKE_UP, 4, 111},
+  // {LEVEL_OBJECT_SPIKE_UP, 15, 111},
+  // {LEVEL_OBJECT_SPIKE_UP, 48, 127},
+  // {LEVEL_OBJECT_SPIKE_UP, 58, 127},
+  // {LEVEL_OBJECT_SPIKE_UP, 68, 127},
+  // {LEVEL_OBJECT_SPIKE_UP, 93, 111},
+  // {LEVEL_OBJECT_SPIKE_UP, 104, 111},
+  // {LEVEL_OBJECT_SPIKE_UP, 139, 111},
+  // {LEVEL_OBJECT_SPIKE_UP, 22, 77},
+  // {LEVEL_OBJECT_SPIKE_UP, 31, 77},
+  // {LEVEL_OBJECT_SPIKE_UP, 28, 59},
+  // {LEVEL_OBJECT_SPIKE_UP, 92, 91},
+  // {LEVEL_OBJECT_SPIKE_UP, 114, 73},
+  // {LEVEL_OBJECT_SPIKE_UP, 123, 73},
+  // {LEVEL_OBJECT_SPIKE_UP, 124, 57},
+  // {LEVEL_OBJECT_SPIKE_UP, 134, 57},
+  // {LEVEL_OBJECT_SPIKE_UP, 107, 40},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 132, 113},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 144, 95},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 122, 79},
+  // {LEVEL_OBJECT_SPIKE_DOWN, 111, 62},
+  // {LEVEL_OBJECT_SPIKE_LEFT, 54, 73},
+  // {LEVEL_OBJECT_SPIKE_RIGHT, 74, 58}
+};
+
 void mainMenu(const char* title, const char* options[], int numOptions, int language){
   (void)language;
   ST7735_SetTextColor(ST7735_WHITE);
@@ -112,6 +161,7 @@ void DrawCursor(int oldSelection, int newSelection){
 
 static LevelObjectState Level0ObjectStates[sizeof(Level0Objects) / sizeof(Level0Objects[0])];
 static LevelObjectState Level1ObjectStates[sizeof(Level1Objects) / sizeof(Level1Objects[0])];
+static LevelObjectState Level2ObjectStates[sizeof(Level2Objects) / sizeof(Level2Objects[0])];
 
 const LevelDefinition Levels[] = {
   {
@@ -129,6 +179,14 @@ const LevelDefinition Levels[] = {
     0,
     Level1Objects,
     sizeof(Level1Objects) / sizeof(Level1Objects[0])
+  },
+  {
+    Level2Platforms,
+    sizeof(Level2Platforms) / sizeof(Level2Platforms[0]),
+    Level2Columns,
+    sizeof(Level2Columns) / sizeof(Level2Columns[0]),
+    Level2Objects,
+    sizeof(Level2Objects) / sizeof(Level2Objects[0])
   }
 };
 
@@ -212,6 +270,9 @@ static LevelObjectState *ObjectStates(uint8_t levelIndex){
   }
   if(levelIndex == 1){
     return Level1ObjectStates;
+  }
+  if(levelIndex == 2){
+    return Level2ObjectStates;
   }
   return 0;
 }
