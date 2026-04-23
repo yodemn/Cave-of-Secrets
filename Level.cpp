@@ -285,13 +285,10 @@ static ImageData ObjectImage(const LevelObject &object, const LevelObjectState *
     return LargeTreeImage;
   }
   
-  // --- THE 4 NEW SPIKES ---
   if(object.type == LEVEL_OBJECT_SPIKE_UP)    return SpikeUpImage; 
   if(object.type == LEVEL_OBJECT_SPIKE_DOWN)  return SpikeDownImage; 
   if(object.type == LEVEL_OBJECT_SPIKE_LEFT)  return SpikeLeftImage; 
   if(object.type == LEVEL_OBJECT_SPIKE_RIGHT) return SpikeRightImage; 
-  // ------------------------
-
   if(object.type == LEVEL_OBJECT_CHEST){
     uint8_t frame = state ? state->chestFrame : 0;
     if(frame >= CHEST_OPEN_FRAME_COUNT){
@@ -415,7 +412,6 @@ bool IsPlayerTouchingSpike(uint8_t levelIndex, Rect playerArea) {
   for(uint8_t i = 0; i < level.objectCount; i++){
     const LevelObject &object = level.objects[i];
     
-    // Check if the object is ANY of the 4 spike types
     if(object.type == LEVEL_OBJECT_SPIKE_UP || 
        object.type == LEVEL_OBJECT_SPIKE_DOWN || 
        object.type == LEVEL_OBJECT_SPIKE_LEFT || 
@@ -423,7 +419,6 @@ bool IsPlayerTouchingSpike(uint8_t levelIndex, Rect playerArea) {
        
       Rect spikeArea = GetObjectArea(object, 0);
       
-      // Make the spike hitbox a little smaller so it feels fair
       spikeArea = ExpandArea(spikeArea, -2, -2); 
       
       if(AreasOverlap(playerArea, spikeArea)) {
