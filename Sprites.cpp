@@ -88,7 +88,7 @@ void AnimatedPlayer::Jump(bool jumpButtonHeld, bool joySelectHeld){
         isGrounded = false;
         
         // Apply one single burst of upward speed
-        velocityY = PLAYER_JUMP_VELOCITY;  
+        velocityY = PLAYER_JUMP_VELOCITY+1;  
         
         comboState = 1;
         comboTimer = 0;
@@ -108,7 +108,7 @@ void AnimatedPlayer::Jump(bool jumpButtonHeld, bool joySelectHeld){
         gravity = 1;     
         
         // Give them the exact same medium burst of speed for the double jump
-        velocityY = PLAYER_JUMP_VELOCITY+1;  
+        velocityY = PLAYER_JUMP_VELOCITY+2;  
     }
 
     // Save states so they can't just hold the button down!
