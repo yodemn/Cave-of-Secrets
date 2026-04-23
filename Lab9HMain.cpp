@@ -43,7 +43,7 @@ uint32_t Random(uint32_t n){
  
 SlidePot Sensor(1674,173); 
 
-static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 24, 118-TILE_SPRITE_HEIGHT, 10, 50};
+static const int16_t PlayerStart[] = {24, 118-TILE_SPRITE_HEIGHT, 24, 118-TILE_SPRITE_HEIGHT, 10, 10};
 AnimatedPlayer player(PlayerStart[0], PlayerStart[1]);
 Background back1(0, 127, 0, background0_img);
 static uint8_t CurrentLevelIndex = 0;
@@ -53,6 +53,7 @@ static Rect GetPlayerArea(int16_t x, int16_t y);
 
 volatile uint32_t CurrentJoystickX = 2048;
 volatile uint32_t CurrentJoystickY = 2048;
+volatile uint32_t CurrentJoystickSelectButton = 0;
 volatile uint32_t CurrentJumpSelect = 0;
 volatile uint32_t CurrentJoystickDirection = 0;
 volatile uint8_t CurrentJumpButtonHeld = 0;
@@ -76,7 +77,7 @@ void TIMG12_IRQHandler(void){
     PCBJoystick_In(&x, &y, &select);
     CurrentJoystickX = x;
     CurrentJoystickY = y;
-    CurrentJumpSelect = select;
+    CurrentJoystickSelectButton = select;
     CurrentJoystickDirection = GetJoystickDirection(x, y, select);
 
     uint32_t portA_input = GPIOA->DIN31_0;
@@ -157,6 +158,23 @@ static void DrawStarCounter(uint32_t stars){
   RestoreBackgroundArea(hudArea);
   DrawImageChroma(1, 13, StarCounterImage);
   ST7735_DrawCharS(13, 4, '0' + stars, ST7735_YELLOW, ST7735_YELLOW, 1);
+}
+
+static void DrawTransparentText(int16_t x, int16_t y, const char *text, int16_t color, uint8_t size){
+  while(*text){
+    ST7735_DrawCharS(x, y, *text, color, color, size);
+    x += 6 * size;
+    text++;
+  }
+}
+
+static void DrawEndScreen(void){
+  ST7735_FillScreen(ST7735_BLACK);
+  back1.Draw();
+  DrawLevel(CurrentLevelIndex);
+  DrawTransparentText(32, 36, "CONGRATS", ST7735_YELLOW, 2);
+  DrawTransparentText(38, 58, "YOU WON", ST7735_WHITE, 2);
+  DrawTransparentText(34, 88, "ALL LEVELS CLEAR", ST7735_CYAN, 1);
 }
 
 static uint32_t GetJoystickDirection(uint32_t x, uint32_t y, uint32_t select){
@@ -315,6 +333,7 @@ int main(void) {
       // Grab buttons safely from the IRQ variables
       bool jumpButtonHeld = (CurrentJumpButtonHeld != 0);
       bool joySelectHeld = (CurrentJumpSelect != 0); 
+      bool joystickSelectHeld = (CurrentJoystickSelectButton != 0);
       
       bool interactButtonHeld;
       if((GPIOA->DIN31_0 & (1<<26)) != 0) {
@@ -326,10 +345,7 @@ int main(void) {
       __enable_irq();
 
       // --- MENU RETURN LOGIC ---
-      if (joySelectHeld) {
-          // Wait for the player to physically let go of the joystick button!
-          while(CurrentJumpSelect != 0) {} 
-          // Break out of the active game loop to go back to the menu!
+      if (joystickSelectHeld) {
           break; 
       }
 
@@ -445,6 +461,7 @@ int main(void) {
         LED_Off(1<<16);
         chestLEDOn = false;
         chestLedTicks = 0;
+        Sound_GreenGiant();
         FlashLevelCompleteLED();
         
         if(CurrentLevelIndex + 1 < LevelCount){
@@ -469,7 +486,7 @@ int main(void) {
         }
         
         // Game Won Screen!
-        ST7735_FillScreen(ST7735_WHITE);
+        DrawEndScreen();
         while(1){
           // Stay here forever or add "You Win!" text
         }

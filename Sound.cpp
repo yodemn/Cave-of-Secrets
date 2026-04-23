@@ -7,6 +7,7 @@
 #include <ti/devices/msp/msp.h>
 #include "Sound.h"
 #include "sounds/sounds.h"
+#include "SoundGreenGiant.h"
 #include "../inc/DAC5.h"
 #include "../inc/Timer.h"
 
@@ -97,6 +98,10 @@ void Sound_Chest(void) {
 
 void Sound_Death(void) {
   Sound_Start(death, deathLength);
+}
+
+void Sound_GreenGiant(void) {
+  Sound_Start(GreenGiantSound, GreenGiantSoundLength);
 }
 
 void Sound_Killed(void){
