@@ -16,6 +16,7 @@
 #include "LED.h"
 #include "Switch.h"
 #include "Sound.h"
+#include "SoundClash.h"
 #include "images/images.h"
 #include "Sprites.h"
 #include "Backgrounds.h"
@@ -259,6 +260,7 @@ int main(void) {
 
   TimerG12_IntArm(80000000 / 30, 2); // 30 Hz game/input tick
   __enable_irq();
+  Sound_Start(ClashSound, sizeof(ClashSound));
   
 // --- DEFINE YOUR MENUS ---
   const char* mainOptions[] = {"Start Game", "Tutorial", "Languages", "Iniciar juego", "Tutorial","Idiomas"};
