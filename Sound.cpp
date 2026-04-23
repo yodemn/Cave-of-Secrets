@@ -39,7 +39,7 @@ void Sound_Init(void){
   SoundCount = 0;
   SoundActive = 0;
 
-  DAC5_Out(16); // middle value, quiet/resting
+  DAC5_Out(16);
   SysTick_IntArm(SOUND_PERIOD, 1);
 }
 extern "C" void SysTick_Handler(void);
@@ -76,7 +76,6 @@ void Sound_Start(const uint8_t *pt, uint32_t count){
   }
   __disable_irq();
 
-  // update stuff
   SoundPt = pt;
   SoundCount = count;
   SoundIndex = 0;

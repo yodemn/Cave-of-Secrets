@@ -6,8 +6,7 @@
 
 #include "ChestSpritesData.inc"
 
-// Generated from first 32x32 frame of assets/Star.png, scaled to 12x12.
-// Colors are packed for this ST7735 driver's BGR565 format.
+
 const uint16_t StarCounterSprite[STAR_SPRITE_WIDTH * STAR_SPRITE_HEIGHT] = {
   0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0,
   0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0, 0x07E0,
@@ -29,9 +28,6 @@ ImageData StarCounterImage = {
   STAR_SPRITE_HEIGHT
 };
 
-// Generated from assets/16-bit-spike-Sheet.png.
-// Transparent source pixels are stored as TILE_CHROMA_KEY.
-// Four 16x16 source frames are scaled to 9x11 and stored bottom-to-top for DrawBitmapChroma.
 
 const uint16_t SpikeUpSprite[SPIKE_SPRITE_WIDTH * SPIKE_SPRITE_HEIGHT] = {
   0x2106, 0x83F0, 0x9D76, 0xCEDF, 0xFFFF, 0xCEDF, 0x9D76, 0x83F0, 0x2106, 0x07E0, 0x5AAA, 0x83F0,
