@@ -61,6 +61,15 @@ volatile uint8_t NewFrameReady = 0;
 volatile uint32_t MenuButton = 0;
 bool chestLEDOn = false;
 
+static void FlashLevelCompleteLED(void){
+  for(uint8_t i = 0; i < 4; i++){
+    LED_On(1 << 17);
+    Clock_Delay1ms(100);
+    LED_Off(1 << 17);
+    Clock_Delay1ms(100);
+  }
+}
+
 // game engine runs at 30Hz
 void TIMG12_IRQHandler(void){
   if((TIMG12->CPU_INT.IIDX) == 1){ 
@@ -231,8 +240,8 @@ int RunMenuScreen(const char* title, const char* options[], int numOptions) {
                 ST7735_SetCursor(5, 5 + (selectedItem * 2)); ST7735_OutChar('>'); 
             } else {
                 ST7735_SetCursor(5, 5 + (selectedItem * 2)); ST7735_OutChar(' '); 
-            }
-        }
+            }      
+  }
     }
     
     // Wait for them to let go of the button before returning
@@ -472,6 +481,9 @@ int main(void) {
     player.Draw();
     if(chestCount <= 0){
       LED_Off(1<<16);
+      chestLEDOn = false;
+      chestLedTicks = 0;
+      FlashLevelCompleteLED();
       if(CurrentLevelIndex + 1 < LevelCount){
         CurrentLevelIndex++;
         player.x = PlayerStart[CurrentLevelIndex*2];
@@ -483,8 +495,6 @@ int main(void) {
         chestCount = ChestGoalCount;
         starCount = 0;
         starCounterDirty = false;
-        chestLEDOn = false;
-        chestLedTicks = 0;
 
         ST7735_FillScreen(ST7735_BLACK);
         ResetLevelObjectStates(CurrentLevelIndex);
