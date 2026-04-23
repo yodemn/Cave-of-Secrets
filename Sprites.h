@@ -2,8 +2,8 @@
 #define SPRITES_H
 #include "img.h"
 #include <stdint.h>
-#define PLAYER_SPRITE_WIDTH 16
-#define PLAYER_SPRITE_HEIGHT 20
+#define PLAYER_SPRITE_WIDTH 14
+#define PLAYER_SPRITE_HEIGHT 18
 #define PLAYER_IDLE_FRAME_COUNT 4
 #define PLAYER_WALK_FRAME_COUNT 8
 #define PLAYER_CHROMA_KEY 0x07E0

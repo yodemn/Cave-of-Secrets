@@ -53,52 +53,34 @@ static const LevelObject Level0Objects[] = {
 };
 
 static const LevelPlatform Level1Platforms[] = {
-  {0, 122, 5},
-  {86, 122, 8},
-  {15, 104, 4},
-  {0, 88, 5},
-  {16, 70, 5},
-  {84, 102, 5},
-  {98, 84, 6},
-  {82, 68, 8},
-  {84, 51, 7},
-  {86, 34, 7}
-};
-
-static const LevelPlatformColumn Level1Columns[] = {
-  {63, 103, 9}
+  {0, 118, 5},
+  {57, 118, 5},
+  {113, 118, 5},
+  {30, 98, 7},
+  {1, 76, 6},
+  {70, 78, 7},
+  {98, 96, 7},
+  {76, 44, 7}
 };
 
 static const LevelObject Level1Objects[] = {
-  {LEVEL_OBJECT_CHEST, 34, 111},
-  {LEVEL_OBJECT_CHEST, 8, 93},
-  {LEVEL_OBJECT_CHEST, 34, 59},
-  {LEVEL_OBJECT_CHEST, 123, 111},
-  {LEVEL_OBJECT_CHEST, 104, 57},
-  {LEVEL_OBJECT_CHEST, 96, 23},
-  {LEVEL_OBJECT_SPIKE_UP, 4, 111},
-  {LEVEL_OBJECT_SPIKE_UP, 15, 111},
-  {LEVEL_OBJECT_SPIKE_UP, 48, 127},
-  {LEVEL_OBJECT_SPIKE_UP, 58, 127},
-  {LEVEL_OBJECT_SPIKE_UP, 68, 127},
-  {LEVEL_OBJECT_SPIKE_UP, 93, 111},
-  {LEVEL_OBJECT_SPIKE_UP, 104, 111},
-  {LEVEL_OBJECT_SPIKE_UP, 139, 111},
-  {LEVEL_OBJECT_SPIKE_UP, 22, 77},
-  {LEVEL_OBJECT_SPIKE_UP, 31, 77},
-  {LEVEL_OBJECT_SPIKE_UP, 28, 59},
-  {LEVEL_OBJECT_SPIKE_UP, 92, 91},
-  {LEVEL_OBJECT_SPIKE_UP, 114, 73},
-  {LEVEL_OBJECT_SPIKE_UP, 123, 73},
-  {LEVEL_OBJECT_SPIKE_UP, 124, 57},
-  {LEVEL_OBJECT_SPIKE_UP, 134, 57},
-  {LEVEL_OBJECT_SPIKE_UP, 107, 40},
-  {LEVEL_OBJECT_SPIKE_DOWN, 132, 113},
-  {LEVEL_OBJECT_SPIKE_DOWN, 144, 95},
-  {LEVEL_OBJECT_SPIKE_DOWN, 122, 79},
-  {LEVEL_OBJECT_SPIKE_DOWN, 111, 62},
-  {LEVEL_OBJECT_SPIKE_LEFT, 54, 73},
-  {LEVEL_OBJECT_SPIKE_RIGHT, 74, 58}
+  {LEVEL_OBJECT_CHEST, 52, 84},
+  {LEVEL_OBJECT_CHEST, 9, 63},
+  {LEVEL_OBJECT_CHEST, 86, 31},
+  {LEVEL_OBJECT_CHEST, 103, 64},
+  {LEVEL_OBJECT_CHEST, 123, 83},
+  {LEVEL_OBJECT_CHEST, 130, 104},
+  {LEVEL_OBJECT_SPIKE_UP, 68, 107},
+  {LEVEL_OBJECT_SPIKE_UP, 90, 107},
+  {LEVEL_OBJECT_SPIKE_UP, 122, 107},
+  {LEVEL_OBJECT_SPIKE_UP, 150, 107},
+  {LEVEL_OBJECT_SPIKE_UP, 40, 87},
+  {LEVEL_OBJECT_SPIKE_UP, 148, 87},
+  {LEVEL_OBJECT_SPIKE_UP, 36, 66},
+  {LEVEL_OBJECT_SPIKE_UP, 133, 66},
+  {LEVEL_OBJECT_SPIKE_UP, 12, 33},
+  {LEVEL_OBJECT_SPIKE_UP, 62, 33},
+  {LEVEL_OBJECT_SPIKE_UP, 146, 33}
 };
 
 void mainMenu(const char* title, const char* options[], int numOptions, int language){
@@ -142,8 +124,8 @@ const LevelDefinition Levels[] = {
   {
     Level1Platforms,
     sizeof(Level1Platforms) / sizeof(Level1Platforms[0]),
-    Level1Columns,
-    sizeof(Level1Columns) / sizeof(Level1Columns[0]),
+    0,
+    0,
     Level1Objects,
     sizeof(Level1Objects) / sizeof(Level1Objects[0])
   }
